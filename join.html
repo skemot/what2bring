@@ -623,6 +623,9 @@ setInterval(async () => {
       btn.textContent = 'Confirm My Selection ✓'
       return
     }
+
+    // Send emails
+    await sendSignupEmails(currentEvent, name, email, selectedItems)
   
     // Show success
     const itemNames = selectedItems.map(i => i.name).join(' and ')
