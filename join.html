@@ -636,6 +636,50 @@ setInterval(async () => {
     document.getElementById('success-state').style.display = 'block'
   }
 
+
+  // email
+  async function sendSignupEmails(event, guestName, guestEmail, selectedItems) {
+  const itemList = selectedItems.map(i => `<li><strong>${i.name}</strong></li>`).join('')
+  
+  // Email to organiser
+  await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      to: event.organiser_email,
+      subject: `New sign-up: ${guestName} — ${event.name}`,
+      html: `
+        <h2>New sign-up for ${event.name}</h2>
+        <p><strong>${guestName}</strong> has signed up to bring:</p>
+        <ul>${itemList}</ul>
+        <p style="color:#888;font-size:12px;">Sent via BringIt</p>
+      `
+    })
+  })
+
+  // Email to guest (only if they provided an email)
+  if (guestEmail) {
+    await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: guestEmail,
+        subject: `You're signed up for ${event.name}!`,
+        html: `
+          <h2>You're signed up! 🎉</h2>
+          <p>Hi ${guestName},</p>
+          <p>Thanks for signing up for <strong>${event.name}</strong>.</p>
+          <p>You're bringing:</p>
+          <ul>${itemList}</ul>
+          ${event.event_date ? `<p>📅 <strong>Date:</strong> ${new Date(event.event_date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong></p>` : ''}
+          ${event.location ? `<p>📍 <strong>Location:</strong> ${event.location}</p>` : ''}
+          <p style="color:#888;font-size:12px;">Sent via BringIt</p>
+        `
+      })
+    })
+  }
+}
+
   // =============================================
   // HELPERS
   // =============================================
