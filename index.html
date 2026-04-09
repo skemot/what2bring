@@ -1951,7 +1951,7 @@ function renderActiveEvents(events) {
     const pct = totalItems > 0 ? Math.round((takenItems / totalItems) * 100) : 0
     const eventDate = new Date(event.event_date + 'T00:00:00')
     const dateStr = eventDate.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-    const joinUrl = `https://bringit-alpha.vercel.app/join.html?event=${event.slug}`
+    const joinUrl = `https://bringit.warragulsda.church/join.html?event=${event.slug}`
 
     const card = document.createElement('div')
     card.className = 'report-event-card'
@@ -2748,7 +2748,7 @@ function saveCategoryField(select) {
 
 
   // Update QR code and share link with real URL
-  const liveUrl = `https://bringit-alpha.vercel.app/join.html?event=${slug}`
+  const liveUrl = `https://bringit.warragulsda.church/join.html?event=${slug}`
   document.getElementById('share-link').textContent = liveUrl
   
   // Regenerate QR code with real URL
