@@ -642,6 +642,8 @@ setInterval(async () => {
 
   // email
   async function sendSignupEmails(event, guestName, guestEmail, selectedItems) {
+
+    console.log('sending to organiser:', event.organiser_email)
   const itemList = selectedItems.map(i => `<li><strong>${i.name}</strong></li>`).join('')
   
   // Email to organiser
