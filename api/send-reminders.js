@@ -12,26 +12,22 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-    // Find events happening in ~48 hours
-    const now = new Date()
-    const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000)
-    const windowStart = new Date(in48h.getTime() - 60 * 60 * 1000) // 1 hour window
-    const windowEnd   = new Date(in48h.getTime() + 60 * 60 * 1000)
+// Find events happening in exactly 2 days (date only)
+const now = new Date()
+const in2days = new Date(now)
+in2days.setDate(in2days.getDate() + 2)
+const targetDate = in2days.toISOString().split('T')[0]
 
-    const dateStart = windowStart.toISOString().split('T')[0]
-    const dateEnd   = windowEnd.toISOString().split('T')[0]
-
-    // Get active events in the 48hr window
-    const { data: events, error } = await db
-      .from('events')
-      .select(`
-        *,
-        signups(id, guest_name, guest_email, item_id),
-        items(id, name)
-      `)
-      .eq('is_active', true)
-      .gte('event_date', dateStart)
-      .lte('event_date', dateEnd)
+// Get active events on that date
+const { data: events, error } = await db
+  .from('events')
+  .select(`
+    *,
+    signups(id, guest_name, guest_email, item_id),
+    items(id, name)
+  `)
+  .eq('is_active', true)
+  .eq('event_date', targetDate)
 
     if (error) {
       console.error('Error fetching events:', error)
