@@ -2239,6 +2239,9 @@ async function saveEditChanges(eventId) {
 
   if (eventError) { alert('Error saving event: ' + eventError.message); return }
 
+console.log('looking for:', `#edit-items-${eventId} .edit-qty-input`)
+console.log('container exists:', document.getElementById(`edit-items-${eventId}`))
+  
 // Update item quantities
 const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
 console.log('qty inputs found:', qtyInputs.length)
