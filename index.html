@@ -2239,14 +2239,17 @@ async function saveEditChanges(eventId) {
 
   if (eventError) { alert('Error saving event: ' + eventError.message); return }
 
-  // Update item quantities
-  const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
-  for (const input of qtyInputs) {
-    const itemId = input.dataset.itemId
-    const taken  = parseInt(input.dataset.taken) || 0
-    const qty    = Math.max(parseInt(input.value) || 1, taken)
-    await db.from('items').update({ quantity: qty }).eq('id', itemId)
-  }
+// Update item quantities
+const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
+console.log('qty inputs found:', qtyInputs.length)
+for (const input of qtyInputs) {
+  const itemId = input.dataset.itemId
+  const taken  = parseInt(input.dataset.taken) || 0
+  const qty    = Math.max(parseInt(input.value) || 1, taken)
+  console.log('updating item:', itemId, 'qty:', qty)
+  const { error } = await db.from('items').update({ quantity: qty }).eq('id', itemId)
+  console.log('update error:', error)
+}
 
   // Close panel and reload dashboard
   toggleEditPanel(eventId)
