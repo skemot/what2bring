@@ -2243,7 +2243,8 @@ console.log('looking for:', `#edit-items-${eventId} .edit-qty-input`)
 console.log('container exists:', document.getElementById(`edit-items-${eventId}`))
   
 // Update item quantities
-const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
+const editPanel = document.getElementById(`edit-${eventId}`)
+const qtyInputs = editPanel.querySelectorAll('.edit-qty-input')
 console.log('qty inputs found:', qtyInputs.length)
 for (const input of qtyInputs) {
   const itemId = input.dataset.itemId
