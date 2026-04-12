@@ -1347,6 +1347,7 @@ tr:hover td { background: var(--cream); }
         <option value="Desserts">🍰 Desserts</option>
         <option value="Drinks">🥤 Drinks</option>
         <option value="Snacks">🧀 Snacks</option>
+        <option value="Ingredients">🥕 Ingredients</option>
         <option value="Other">📦 Other</option>
       </select>
       <button class="btn btn-primary" onclick="addItem()">+ Add</button>
@@ -2076,6 +2077,7 @@ function renderActiveEvents(events) {
             <option value="Desserts">🍰 Desserts</option>
             <option value="Drinks">🥤 Drinks</option>
             <option value="Snacks">🧀 Snacks</option>
+            <option value="Ingredients">🥕 Ingredients</option>
             <option value="Other">📦 Other</option>
           </select>
           <button onclick="addEditItem('${event.id}')" style="padding:9px 16px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
@@ -2237,14 +2239,21 @@ async function saveEditChanges(eventId) {
 
   if (eventError) { alert('Error saving event: ' + eventError.message); return }
 
-  // Update item quantities
-  const qtyInputs = document.querySelectorAll(`#edit-items-${eventId} .edit-qty-input`)
-  for (const input of qtyInputs) {
-    const itemId = input.dataset.itemId
-    const taken  = parseInt(input.dataset.taken) || 0
-    const qty    = Math.max(parseInt(input.value) || 1, taken)
-    await db.from('items').update({ quantity: qty }).eq('id', itemId)
-  }
+console.log('looking for:', `#edit-items-${eventId} .edit-qty-input`)
+console.log('container exists:', document.getElementById(`edit-items-${eventId}`))
+  
+// Update item quantities
+const editPanel = document.getElementById(`edit-${eventId}`)
+const qtyInputs = editPanel.querySelectorAll('.edit-qty-input')
+console.log('qty inputs found:', qtyInputs.length)
+for (const input of qtyInputs) {
+  const itemId = input.dataset.itemId
+  const taken  = parseInt(input.dataset.taken) || 0
+  const qty    = Math.max(parseInt(input.value) || 1, taken)
+  console.log('updating item:', itemId, 'qty:', qty)
+  const { error } = await db.from('items').update({ quantity: qty }).eq('id', itemId)
+  console.log('update error:', error)
+}
 
   // Close panel and reload dashboard
   toggleEditPanel(eventId)
