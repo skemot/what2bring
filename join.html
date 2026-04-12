@@ -556,8 +556,11 @@ catItems.forEach(item => {
   }
 
 
-  function adjustQty(itemId, delta, maxRemaining) {
+function adjustQty(itemId, delta, maxRemaining) {
+  console.log('adjustQty called:', itemId, delta)
   const el = document.getElementById(`qty-select-${itemId}`)
+  console.log('el found:', el)
+  
   let current = parseInt(el.textContent) || 0
   current = Math.max(0, current + delta)
   if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
