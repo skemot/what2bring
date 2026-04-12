@@ -465,6 +465,29 @@ setInterval(async () => {
   // =============================================
   // RENDER EVENT
   // =============================================
+
+function adjustQty(itemId, delta, maxRemaining) {
+  console.log('adjustQty called:', itemId, delta)
+  const el = document.getElementById(`qty-select-${itemId}`)
+  console.log('el found:', el)
+  
+  let current = parseInt(el.textContent) || 0
+  current = Math.max(0, current + delta)
+  if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
+  el.textContent = current
+
+  // Update selectedItems
+  const existing = selectedItems.find(i => i.id === itemId)
+  if (current === 0) {
+    selectedItems = selectedItems.filter(i => i.id !== itemId)
+  } else if (existing) {
+    existing.quantity = current
+  } else {
+    const itemName = el.closest('.item').querySelector('.item-name').textContent
+    selectedItems.push({ id: itemId, name: itemName, quantity: current })
+  }
+}
+  
   function renderEvent(event, takenIds, signups) {
     // Update header
     document.title = event.name + ' — BringIt'
@@ -512,28 +535,32 @@ setInterval(async () => {
           container.appendChild(header)
         }
 
-        catItems.forEach(item => {
-          const qty = item.quantity || 1
-          const takenCount = signups?.filter(s => s.item_id === item.id).length || 0
-          const remaining = qty - takenCount
-          const fullyTaken = remaining <= 0
-        
-          const div = document.createElement('div')
-          div.className = 'item' + (fullyTaken ? ' taken' : '')
-          div.innerHTML = `
-            <div class="item-check">${fullyTaken ? '✓' : ''}</div>
-            <div class="item-info">
-              <div class="item-name">${item.name}</div>
-              ${item.serves ? `<div class="item-serves">${item.serves}</div>` : ''}
-              ${qty > 1 ? `<div class="item-serves">${remaining} of ${qty} spots remaining</div>` : ''}
-            </div>
-            ${fullyTaken ? '<span class="taken-badge">Taken</span>' : ''}
-          `
-          if (!fullyTaken) {
-            div.addEventListener('click', () => selectItem(div, item))
-          }
-          container.appendChild(div)
-        })
+catItems.forEach(item => {
+  const qty = item.quantity || 1
+  const takenCount = signups?.filter(s => s.item_id === item.id).length || 0
+  const remaining = qty - takenCount
+  const fullyTaken = remaining <= 0
+
+  const div = document.createElement('div')
+  div.className = 'item' + (fullyTaken ? ' taken' : '')
+  div.innerHTML = `
+    <div class="item-info">
+      <div class="item-name">${item.name}</div>
+      ${item.serves ? `<div class="item-serves">${item.serves}</div>` : ''}
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      ${!fullyTaken ? `
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button onclick="adjustQty('${item.id}', -1)" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">−</button>
+          <span id="qty-select-${item.id}" style="font-weight:700;font-size:16px;min-width:20px;text-align:center;">0</span>
+          <button onclick="adjustQty('${item.id}', 1, ${remaining})" style="width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);background:white;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+        </div>
+        <span style="font-size:12px;color:var(--ink-soft);">${remaining} left</span>
+      ` : `<span style="background:var(--green-pale);color:var(--green);padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;">✓ Full</span>`}
+    </div>
+  `
+  container.appendChild(div)
+})
       })
     }
 
@@ -550,6 +577,9 @@ setInterval(async () => {
     document.getElementById('loading').style.display = 'none'
     document.getElementById('main-form').style.display = 'block'
   }
+
+
+
 
   // =============================================
   // SELECT ITEM
@@ -605,13 +635,15 @@ setInterval(async () => {
     btn.disabled = true
     btn.textContent = 'Saving...'
   
-    // Insert a signup row for each selected item
-    const signupRows = selectedItems.map(item => ({
-      item_id:     item.id,
-      event_id:    currentEvent.id,
-      guest_name:  name,
-      guest_email: email || null
-    }))
+// Insert a signup row for each selected item and quantity
+const signupRows = selectedItems.flatMap(item => 
+  Array.from({ length: item.quantity || 1 }, () => ({
+    item_id:     item.id,
+    event_id:    currentEvent.id,
+    guest_name:  name,
+    guest_email: email || null
+  }))
+)
   
     const { error } = await db
       .from('signups')
@@ -628,7 +660,7 @@ setInterval(async () => {
     await sendSignupEmails(currentEvent, name, email, selectedItems)
   
     // Show success
-    const itemNames = selectedItems.map(i => i.name).join(' and ')
+    const itemNames = selectedItems.map(i => i.quantity > 1 ? `${i.name} × ${i.quantity}` : i.name).join(' and ')
     const emailMsg = email ? `A reminder will be sent to ${email} before the event.` : `We'll see you soon!`
     document.getElementById('success-sub').innerHTML = `Thanks for signing up, ${name}!<br>${emailMsg}`
     document.getElementById('success-item').textContent = itemNames
@@ -644,7 +676,9 @@ setInterval(async () => {
   async function sendSignupEmails(event, guestName, guestEmail, selectedItems) {
 
     console.log('sending to organiser:', event.organiser_email)
-  const itemList = selectedItems.map(i => `<li><strong>${i.name}</strong></li>`).join('')
+  const itemList = selectedItems.map(i => 
+  `<li><strong>${i.name}</strong>${i.quantity > 1 ? ` × ${i.quantity}` : ''}</li>`
+).join('')
   
   // Email to organiser
   await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
