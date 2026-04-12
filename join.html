@@ -570,7 +570,7 @@ catItems.forEach(item => {
   } else if (existing) {
     existing.quantity = current
   } else {
-    const itemName = el.closest('.item').querySelector('.item-name-text').textContent
+    const itemName = el.closest('.item').querySelector('.item-name').textContent
     selectedItems.push({ id: itemId, name: itemName, quantity: current })
   }
 }
