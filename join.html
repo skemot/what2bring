@@ -465,6 +465,29 @@ setInterval(async () => {
   // =============================================
   // RENDER EVENT
   // =============================================
+
+function adjustQty(itemId, delta, maxRemaining) {
+  console.log('adjustQty called:', itemId, delta)
+  const el = document.getElementById(`qty-select-${itemId}`)
+  console.log('el found:', el)
+  
+  let current = parseInt(el.textContent) || 0
+  current = Math.max(0, current + delta)
+  if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
+  el.textContent = current
+
+  // Update selectedItems
+  const existing = selectedItems.find(i => i.id === itemId)
+  if (current === 0) {
+    selectedItems = selectedItems.filter(i => i.id !== itemId)
+  } else if (existing) {
+    existing.quantity = current
+  } else {
+    const itemName = el.closest('.item').querySelector('.item-name').textContent
+    selectedItems.push({ id: itemId, name: itemName, quantity: current })
+  }
+}
+  
   function renderEvent(event, takenIds, signups) {
     // Update header
     document.title = event.name + ' — BringIt'
@@ -556,27 +579,7 @@ catItems.forEach(item => {
   }
 
 
-function adjustQty(itemId, delta, maxRemaining) {
-  console.log('adjustQty called:', itemId, delta)
-  const el = document.getElementById(`qty-select-${itemId}`)
-  console.log('el found:', el)
-  
-  let current = parseInt(el.textContent) || 0
-  current = Math.max(0, current + delta)
-  if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
-  el.textContent = current
 
-  // Update selectedItems
-  const existing = selectedItems.find(i => i.id === itemId)
-  if (current === 0) {
-    selectedItems = selectedItems.filter(i => i.id !== itemId)
-  } else if (existing) {
-    existing.quantity = current
-  } else {
-    const itemName = el.closest('.item').querySelector('.item-name').textContent
-    selectedItems.push({ id: itemId, name: itemName, quantity: current })
-  }
-}
 
   // =============================================
   // SELECT ITEM
