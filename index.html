@@ -2776,7 +2776,7 @@ function saveCategoryField(select) {
     serves:     row.querySelector('.item-serves').textContent,
     quantity:   parseInt(row.querySelector('.item-qty')?.textContent?.replace('×','')) || 1,
     category:   row.dataset.category || null,
-    is_priority: row.querySelector('[data-priority]')?.dataset.priority === 'true'
+    is_priority: row.querySelector('[data-priority]')?.dataset.priority === 'true',
     sort_order: i
   }))
 
