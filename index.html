@@ -1898,7 +1898,7 @@ async function loadReportDashboard() {
     .from('events')
     .select(`
       *,
-      items(id, name, serves, quantity, category),
+      items(id, name, serves, quantity, category, is_priority),
       signups(id, item_id, guest_name, guest_email)
     `)
     .eq('organiser_id', currentUser.id)
