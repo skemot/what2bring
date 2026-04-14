@@ -1927,6 +1927,22 @@ async function loadReportDashboard() {
   renderPastEvents(past)
 }
 
+  async function toggleEditPriority(btn, itemId) {
+  const isPriority = btn.dataset.priority === 'true'
+  const newValue = !isPriority
+  
+  const { error } = await db
+    .from('items')
+    .update({ is_priority: newValue })
+    .eq('id', itemId)
+
+  if (error) { alert('Error updating priority: ' + error.message); return }
+
+  btn.dataset.priority = newValue
+  btn.style.opacity = newValue ? '1' : '0.3'
+  btn.title = newValue ? 'Remove priority' : 'Mark as priority'
+}
+
 function renderActiveEvents(events) {
   const container = document.getElementById('active-events-container')
   container.innerHTML = ''
@@ -2047,6 +2063,11 @@ function renderActiveEvents(events) {
                   />
                 </div>
                 ${statusBadge}
+                <button 
+  onclick="toggleEditPriority(this, '${item.id}')" 
+  data-priority="${item.is_priority || false}"
+  style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:${item.is_priority ? '1' : '0.3'};"
+  title="${item.is_priority ? 'Remove priority' : 'Mark as priority'}">⭐</button>
                 ${!isTaken 
                   ? `<button onclick="removeEditItem(this, '${item.id}', '${event.id}')" style="background:none;border:1px solid var(--rose);color:var(--rose);border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;">Remove</button>`
                   : `<button disabled style="background:none;border:1px solid var(--border);color:var(--border);border-radius:8px;padding:4px 10px;font-size:12px;cursor:not-allowed;">Remove</button>`
@@ -2591,6 +2612,7 @@ function copyLink() {
     <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
     <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${category || 'No category'}</span>
     <span class="item-status status-open">Open</span>
+    <button onclick="togglePriority(this)" title="Mark as priority" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:0.3;" data-priority="false">⭐</button>
     <button class="btn btn-danger" onclick="confirmRemoveItem(this, null)">Remove</button>
   `
 
@@ -2599,6 +2621,13 @@ function copyLink() {
   name.value = ''; serves.value = ''; if (qty) qty.value = '1';
   document.getElementById('item-category-input').value = ''
   document.getElementById('item-serves-prefix').value = 'Serves'
+}
+
+  function togglePriority(btn) {
+  const isPriority = btn.dataset.priority === 'true'
+  btn.dataset.priority = !isPriority
+  btn.style.opacity = isPriority ? '0.3' : '1'
+  btn.title = isPriority ? 'Mark as priority' : 'Remove priority'
 }
 
 function editItemField(el) {
@@ -2747,6 +2776,7 @@ function saveCategoryField(select) {
     serves:     row.querySelector('.item-serves').textContent,
     quantity:   parseInt(row.querySelector('.item-qty')?.textContent?.replace('×','')) || 1,
     category:   row.dataset.category || null,
+    is_priority: row.querySelector('[data-priority]')?.dataset.priority === 'true'
     sort_order: i
   }))
 
