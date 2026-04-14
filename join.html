@@ -539,6 +539,24 @@ function adjustQty(itemId, delta, maxRemaining) {
           container.appendChild(header)
         }
 
+catItems.sort((a, b) => {
+  const aFull = (a.quantity || 1) - (signups?.filter(s => s.item_id === a.id).length || 0) <= 0
+  const bFull = (b.quantity || 1) - (signups?.filter(s => s.item_id === b.id).length || 0) <= 0
+  
+  // Full items go last
+  if (aFull && !bFull) return 1
+  if (!aFull && bFull) return -1
+  
+  // Priority items go first (among non-full items)
+  if (!aFull && !bFull) {
+    if (a.is_priority && !b.is_priority) return -1
+    if (!a.is_priority && b.is_priority) return 1
+  }
+  
+  // Alphabetical within same group
+  return a.name.localeCompare(b.name)
+})
+
 catItems.forEach(item => {
   const qty = item.quantity || 1
   const takenCount = signups?.filter(s => s.item_id === item.id).length || 0
