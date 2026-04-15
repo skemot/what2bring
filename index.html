@@ -631,6 +631,7 @@ body {
   display: flex;
   gap: 10px;
   margin-top: 12px;
+  flex-wrap: wrap;
 }
 .add-row input {
   padding: 9px 13px;
@@ -933,6 +934,43 @@ tr:hover td { background: var(--cream); }
   margin: 0 auto 20px;
   animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
 }
+
+/* MOBILE BOTTOM NAV */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid var(--border);
+  padding: 8px 0 env(safe-area-inset-bottom);
+  z-index: 300;
+  justify-content: space-around;
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 10px;
+  transition: background 0.15s;
+  flex: 1;
+}
+.mobile-nav-item:hover { background: var(--cream); }
+.mobile-nav-item.active .mobile-nav-icon { transform: scale(1.15); }
+.mobile-nav-item.active .mobile-nav-label { color: var(--green); font-weight: 600; }
+
+.mobile-nav-icon { font-size: 20px; }
+.mobile-nav-label { font-size: 10px; color: var(--ink-soft); font-family: 'DM Sans', sans-serif; }
+
+
+  
 @keyframes popIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .success-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
 .success-sub { font-size: 14px; color: var(--ink-soft); margin-bottom: 24px; line-height: 1.6; }
@@ -960,6 +998,9 @@ tr:hover td { background: var(--cream); }
   .form-row { flex-direction: column; }
   .nav-pills { display: none; }
   .category-grid { grid-template-columns: repeat(2,1fr); }
+  .mobile-nav { display: flex; }
+  /* Add padding to screens so content isn't hidden behind nav */
+  .screen.active { padding-bottom: 70px; }
 }
 
 @media (max-width: 480px) {
@@ -1001,6 +1042,9 @@ tr:hover td { background: var(--cream); }
     <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;" />
     
     <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
+    <div id="forgot-password-link" style="text-align:center;margin-top:10px;">
+      <button onclick="forgotPassword()" style="background:none;border:none;color:var(--green);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Forgot password?</button>
+    </div>
     
     <div id="auth-error" style="color:#C9474D;font-size:13px;text-align:center;margin-top:10px;display:none;"></div>
     
@@ -1694,6 +1738,7 @@ function openAuth(mode = 'signin') {
   document.getElementById('auth-switch-text').textContent = mode === 'signin' ? "Don't have an account?" : 'Already have an account?'
   document.getElementById('auth-switch-btn').textContent = mode === 'signin' ? 'Sign Up' : 'Sign In'
   document.getElementById('auth-error').style.display = 'none'
+  document.getElementById('forgot-password-link').style.display = mode === 'signin' ? 'block' : 'none'
 }
 
 function closeAuth() {
@@ -1754,6 +1799,40 @@ async function signOut() {
 }
 
 
+async function forgotPassword() {
+  const email = document.getElementById('auth-email').value.trim()
+  if (!email) {
+    showAuthError('Please enter your email address first')
+    return
+  }
+  
+  const btn = document.querySelector('[onclick="forgotPassword()"]')
+  btn.textContent = 'Sending...'
+  btn.disabled = true
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bringit.warragulsda.church'
+  })
+  
+  if (error) {
+    if (error.message.includes('seconds')) {
+      showAuthError('Please wait a moment before requesting another reset email.')
+    } else {
+      showAuthError(error.message)
+    }
+    btn.textContent = 'Forgot password?'
+    btn.style.color = ''
+    btn.style.fontWeight = ''
+    btn.disabled = false
+    return
+  }
+  
+  btn.textContent = '✓ Email sent! Check your inbox.'
+  btn.style.color = 'var(--green)'
+  btn.style.fontWeight = '600'
+}
+
+
 
 async function handleCreateEvent() {
   if (!currentUser) {
@@ -1763,6 +1842,48 @@ async function handleCreateEvent() {
   const canCreate = await checkCanCreateEvent()
   if (canCreate) showScreen('organiser')
 }
+
+
+
+  function showPasswordResetModal() {
+    document.getElementById('auth-modal').style.display = 'flex'
+    document.getElementById('auth-title').textContent = 'Set new password'
+    document.getElementById('auth-sub').textContent = 'Enter your new password below'
+    document.getElementById('auth-email').style.display = 'none'
+    document.getElementById('auth-submit-btn').textContent = 'Update Password'
+    document.getElementById('auth-submit-btn').onclick = updatePassword
+    document.getElementById('forgot-password-link').style.display = 'none'
+    document.querySelector('[onclick="toggleAuthMode()"]').style.display = 'none'
+  }
+  
+  async function updatePassword() {
+    const password = document.getElementById('auth-password').value.trim()
+    const btn = document.getElementById('auth-submit-btn')
+  
+    if (!password || password.length < 6) {
+      showAuthError('Password must be at least 6 characters')
+      return
+    }
+  
+    btn.disabled = true
+    btn.textContent = 'Updating...'
+  
+    const { error } = await db.auth.updateUser({ password })
+  
+    if (error) {
+      showAuthError(error.message)
+      btn.disabled = false
+      btn.textContent = 'Update Password'
+      return
+    }
+  
+    closeAuth()
+    // Reset modal back to normal
+    document.getElementById('auth-email').style.display = 'block'
+    document.getElementById('auth-submit-btn').onclick = submitAuth
+    alert('Password updated successfully! ✅')
+    showScreen('organiser')
+  }
 
 
 
@@ -1877,6 +1998,12 @@ window.addEventListener('load', () => {
     alert('🎉 Welcome to BringIt! Your subscription is active.')
     // Clean up URL
     window.history.replaceState({}, '', window.location.pathname)
+  }
+  
+  // Handle password reset redirect
+  const hashParams = new URLSearchParams(window.location.hash.substring(1))
+  if (hashParams.get('type') === 'recovery') {
+    showPasswordResetModal()
   }
 })
 
@@ -2032,7 +2159,13 @@ function renderActiveEvents(events) {
         <!-- Items list -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Items</div>
         <div id="edit-items-${event.id}" style="margin-bottom:12px;">
-          ${event.items?.sort((a,b) => a.sort_order - b.sort_order).map(item => {
+          ${event.items?.sort((a, b) => {
+            const aTaken = (event.signups?.filter(s => s.item_id === a.id).length || 0) >= (a.quantity || 1)
+            const bTaken = (event.signups?.filter(s => s.item_id === b.id).length || 0) >= (b.quantity || 1)
+            if (aTaken && !bTaken) return 1
+            if (!aTaken && bTaken) return -1
+            return a.name.localeCompare(b.name)
+          }).map(item => {
             const qty = item.quantity || 1
             const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
             const isTaken = taken > 0
@@ -2141,7 +2274,13 @@ function renderPastEvents(events) {
 }
 
 function renderEventDetail(event) {
-  const itemRows = event.items?.map(item => {
+  const itemRows = event.items?.sort((a, b) => {
+    const aTaken = (event.signups?.filter(s => s.item_id === a.id).length || 0) >= (a.quantity || 1)
+    const bTaken = (event.signups?.filter(s => s.item_id === b.id).length || 0) >= (b.quantity || 1)
+    if (aTaken && !bTaken) return 1
+    if (!aTaken && bTaken) return -1
+    return a.name.localeCompare(b.name)
+  }).map(item => {
     const qty = item.quantity || 1
     const signups = event.signups?.filter(s => s.item_id === item.id) || []
     const taken = signups.length
@@ -2549,6 +2688,11 @@ async function confirmRemoveItem(btn, itemId) {
     document.getElementById('screen-' + name).classList.add('active');
     const map = { landing: 0, organiser: 1, report: 2, scan: 3 };
     document.querySelectorAll('.nav-pill')[map[name]].classList.add('active');
+    // Sync mobile nav
+    document.querySelectorAll('.mobile-nav-item')[map[name]]?.classList.add('active')
+    document.querySelectorAll('.mobile-nav-item').forEach((b, i) => {
+      if (i !== map[name]) b.classList.remove('active')
+    })
     window.scrollTo(0, 0);
     if (name === 'report') loadReportDashboard();
   }
@@ -2885,6 +3029,11 @@ async function scanSubmit() {
   }
 
 
+  function setMobileNav(btn) {
+    document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'))
+    btn.classList.add('active')
+  }
+
 
 
 
@@ -2893,5 +3042,26 @@ async function scanSubmit() {
 
   
 </script>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-nav" id="mobile-nav">
+  <button class="mobile-nav-item active" onclick="showScreen('landing'); setMobileNav(this)">
+    <span class="mobile-nav-icon">🏠</span>
+    <span class="mobile-nav-label">Home</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showScreen('organiser'); setMobileNav(this)">
+    <span class="mobile-nav-icon">📋</span>
+    <span class="mobile-nav-label">Organiser</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showScreen('report'); setMobileNav(this)">
+    <span class="mobile-nav-icon">📊</span>
+    <span class="mobile-nav-label">Report</span>
+  </button>
+  <button class="mobile-nav-item" onclick="showScreen('scan'); setMobileNav(this)">
+    <span class="mobile-nav-icon">📱</span>
+    <span class="mobile-nav-label">Guest View</span>
+  </button>
+</nav>
+  
 </body>
 </html>
