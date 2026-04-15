@@ -2073,7 +2073,13 @@ function renderActiveEvents(events) {
         <!-- Items list -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Items</div>
         <div id="edit-items-${event.id}" style="margin-bottom:12px;">
-          ${event.items?.sort((a,b) => a.sort_order - b.sort_order).map(item => {
+          ${event.items?.sort((a, b) => {
+            const aTaken = (event.signups?.filter(s => s.item_id === a.id).length || 0) >= (a.quantity || 1)
+            const bTaken = (event.signups?.filter(s => s.item_id === b.id).length || 0) >= (b.quantity || 1)
+            if (aTaken && !bTaken) return 1
+            if (!aTaken && bTaken) return -1
+            return a.name.localeCompare(b.name)
+          }).map(item => {
             const qty = item.quantity || 1
             const taken = event.signups?.filter(s => s.item_id === item.id).length || 0
             const isTaken = taken > 0
