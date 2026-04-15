@@ -1799,25 +1799,32 @@ async function signOut() {
 }
 
 
-  async function forgotPassword() {
-    const email = document.getElementById('auth-email').value.trim()
-    if (!email) {
-      showAuthError('Please enter your email address first')
-      return
-    }
-    
-    const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://bringit.warragulsda.church'
-    })
-    
-    if (error) {
-      showAuthError(error.message)
-      return
-    }
-    
-    closeAuth()
-    alert('Password reset email sent! Check your inbox.')
+async function forgotPassword() {
+  const email = document.getElementById('auth-email').value.trim()
+  if (!email) {
+    showAuthError('Please enter your email address first')
+    return
   }
+  
+  const btn = document.querySelector('[onclick="forgotPassword()"]')
+  btn.textContent = 'Sending...'
+  btn.disabled = true
+
+  const { error } = await db.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://bringit.warragulsda.church'
+  })
+  
+  if (error) {
+    showAuthError(error.message)
+    btn.textContent = 'Forgot password?'
+    btn.disabled = false
+    return
+  }
+  
+  btn.textContent = '✓ Email sent! Check your inbox.'
+  btn.style.color = 'var(--green)'
+  btn.style.fontWeight = '600'
+}
 
 
 
