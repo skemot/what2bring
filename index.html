@@ -2188,7 +2188,13 @@ function renderPastEvents(events) {
 }
 
 function renderEventDetail(event) {
-  const itemRows = event.items?.map(item => {
+  const itemRows = event.items?.sort((a, b) => {
+    const aTaken = (event.signups?.filter(s => s.item_id === a.id).length || 0) >= (a.quantity || 1)
+    const bTaken = (event.signups?.filter(s => s.item_id === b.id).length || 0) >= (b.quantity || 1)
+    if (aTaken && !bTaken) return 1
+    if (!aTaken && bTaken) return -1
+    return a.name.localeCompare(b.name)
+  }).map(item => {
     const qty = item.quantity || 1
     const signups = event.signups?.filter(s => s.item_id === item.id) || []
     const taken = signups.length
