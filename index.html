@@ -1815,8 +1815,14 @@ async function forgotPassword() {
   })
   
   if (error) {
-    showAuthError(error.message)
+    if (error.message.includes('seconds')) {
+      showAuthError('Please wait a moment before requesting another reset email.')
+    } else {
+      showAuthError(error.message)
+    }
     btn.textContent = 'Forgot password?'
+    btn.style.color = ''
+    btn.style.fontWeight = ''
     btn.disabled = false
     return
   }
