@@ -1832,6 +1832,48 @@ async function handleCreateEvent() {
 
 
 
+  function showPasswordResetModal() {
+    document.getElementById('auth-modal').style.display = 'flex'
+    document.getElementById('auth-title').textContent = 'Set new password'
+    document.getElementById('auth-sub').textContent = 'Enter your new password below'
+    document.getElementById('auth-email').style.display = 'none'
+    document.getElementById('auth-submit-btn').textContent = 'Update Password'
+    document.getElementById('auth-submit-btn').onclick = updatePassword
+    document.getElementById('forgot-password-link').style.display = 'none'
+    document.querySelector('[onclick="toggleAuthMode()"]').style.display = 'none'
+  }
+  
+  async function updatePassword() {
+    const password = document.getElementById('auth-password').value.trim()
+    const btn = document.getElementById('auth-submit-btn')
+  
+    if (!password || password.length < 6) {
+      showAuthError('Password must be at least 6 characters')
+      return
+    }
+  
+    btn.disabled = true
+    btn.textContent = 'Updating...'
+  
+    const { error } = await db.auth.updateUser({ password })
+  
+    if (error) {
+      showAuthError(error.message)
+      btn.disabled = false
+      btn.textContent = 'Update Password'
+      return
+    }
+  
+    closeAuth()
+    // Reset modal back to normal
+    document.getElementById('auth-email').style.display = 'block'
+    document.getElementById('auth-submit-btn').onclick = submitAuth
+    alert('Password updated successfully! ✅')
+    showScreen('organiser')
+  }
+
+
+
 // =============================================
 // PLAN LIMITS
 // =============================================
@@ -1943,6 +1985,12 @@ window.addEventListener('load', () => {
     alert('🎉 Welcome to BringIt! Your subscription is active.')
     // Clean up URL
     window.history.replaceState({}, '', window.location.pathname)
+  }
+  
+  // Handle password reset redirect
+  const hashParams = new URLSearchParams(window.location.hash.substring(1))
+  if (hashParams.get('type') === 'recovery') {
+    showPasswordResetModal()
   }
 })
 
