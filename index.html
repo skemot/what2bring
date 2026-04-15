@@ -1042,6 +1042,9 @@ tr:hover td { background: var(--cream); }
     <input id="auth-password" type="password" placeholder="Password" style="width:100%;padding:11px 13px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-bottom:16px;outline:none;" />
     
     <button id="auth-submit-btn" onclick="submitAuth()" style="width:100%;padding:12px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
+    <div id="forgot-password-link" style="text-align:center;margin-top:10px;">
+      <button onclick="forgotPassword()" style="background:none;border:none;color:var(--green);font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">Forgot password?</button>
+    </div>
     
     <div id="auth-error" style="color:#C9474D;font-size:13px;text-align:center;margin-top:10px;display:none;"></div>
     
@@ -1735,6 +1738,7 @@ function openAuth(mode = 'signin') {
   document.getElementById('auth-switch-text').textContent = mode === 'signin' ? "Don't have an account?" : 'Already have an account?'
   document.getElementById('auth-switch-btn').textContent = mode === 'signin' ? 'Sign Up' : 'Sign In'
   document.getElementById('auth-error').style.display = 'none'
+  document.getElementById('forgot-password-link').style.display = mode === 'signin' ? 'block' : 'none'
 }
 
 function closeAuth() {
@@ -1793,6 +1797,27 @@ async function signOut() {
   updateNavForAuth()
   showScreen('landing')
 }
+
+
+  async function forgotPassword() {
+    const email = document.getElementById('auth-email').value.trim()
+    if (!email) {
+      showAuthError('Please enter your email address first')
+      return
+    }
+    
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://bringit.warragulsda.church'
+    })
+    
+    if (error) {
+      showAuthError(error.message)
+      return
+    }
+    
+    closeAuth()
+    alert('Password reset email sent! Check your inbox.')
+  }
 
 
 
