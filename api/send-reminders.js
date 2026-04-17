@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 // Find events happening in exactly 2 days (date only)
 const now = new Date()
 const in2days = new Date(now)
-in2days.setDate(in2days.getDate() + 1)
+in2days.setDate(in2days.getDate() + 2)
 const targetDate = in2days.toISOString().split('T')[0]
 
 // Get active events on that date
