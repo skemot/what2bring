@@ -12,10 +12,13 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-// Find events happening in exactly 2 days (date only)
+// Cron runs at 23:00 UTC = 9:00 AM AEST (UTC+10).
+// Use AEST date for the "2 days from now" calculation so an event on Saturday
+// gets its reminder on Thursday morning, not Friday.
 const now = new Date()
-const in2days = new Date(now)
-in2days.setDate(in2days.getDate() + 2)
+const aestNow = new Date(now.getTime() + 10 * 60 * 60 * 1000)
+const in2days = new Date(aestNow)
+in2days.setUTCDate(in2days.getUTCDate() + 2)
 const targetDate = in2days.toISOString().split('T')[0]
 
 // Get active events on that date
@@ -59,7 +62,7 @@ const { data: events, error } = await db
         const eventDate = new Date(event.event_date + 'T00:00:00')
           .toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
-        await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
+        const emailRes = await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -77,7 +80,12 @@ const { data: events, error } = await db
             `
           })
         })
-        emailsSent++
+        if (!emailRes.ok) {
+          const errText = await emailRes.text()
+          console.error(`Failed reminder to ${guest.email}: ${emailRes.status} ${errText}`)
+        } else {
+          emailsSent++
+        }
       }
     }
 
