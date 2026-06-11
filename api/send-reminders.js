@@ -56,8 +56,9 @@ const { data: events, error } = await db
         }
       }
 
-      // Send reminder to each guest
+      // Send reminder to each guest — 600ms delay between sends to stay under Resend's 2/sec limit
       for (const guest of Object.values(guestsWithEmail)) {
+        await new Promise(resolve => setTimeout(resolve, 600))
         const itemList = guest.items.map(i => `<li><strong>${i}</strong></li>`).join('')
         const eventDate = new Date(event.event_date + 'T00:00:00')
           .toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
