@@ -2391,33 +2391,37 @@ async function saveEditChanges(eventId) {
 
   if (!name || !date) { alert('Please fill in event name and date.'); return }
 
-  // Update event details
-  const { error: eventError } = await db
-    .from('events')
-    .update({ name, event_date: date, event_time: time, location })
-    .eq('id', eventId)
+  const saveBtn = document.querySelector(`#edit-${eventId} .btn-primary`)
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...' }
 
-  if (eventError) { alert('Error saving event: ' + eventError.message); return }
+  try {
+    // Update event details
+    const { error: eventError } = await db
+      .from('events')
+      .update({ name, event_date: date, event_time: time, location })
+      .eq('id', eventId)
 
-console.log('looking for:', `#edit-items-${eventId} .edit-qty-input`)
-console.log('container exists:', document.getElementById(`edit-items-${eventId}`))
-  
-// Update item quantities
-const editPanel = document.getElementById(`edit-${eventId}`)
-const qtyInputs = editPanel.querySelectorAll('.edit-qty-input')
-console.log('qty inputs found:', qtyInputs.length)
-for (const input of qtyInputs) {
-  const itemId = input.dataset.itemId
-  const taken  = parseInt(input.dataset.taken) || 0
-  const qty    = Math.max(parseInt(input.value) || 1, taken)
-  console.log('updating item:', itemId, 'qty:', qty)
-  const { error } = await db.from('items').update({ quantity: qty }).eq('id', itemId)
-  console.log('update error:', error)
-}
+    if (eventError) { alert('Error saving event: ' + eventError.message); return }
 
-  // Close panel and reload dashboard
-  toggleEditPanel(eventId)
-  loadReportDashboard()
+    // Update item quantities
+    const editPanel = document.getElementById(`edit-${eventId}`)
+    if (!editPanel) { alert('Could not find edit panel — please refresh and try again.'); return }
+
+    const qtyInputs = editPanel.querySelectorAll('.edit-qty-input')
+    for (const input of qtyInputs) {
+      const itemId = input.dataset.itemId
+      const taken  = parseInt(input.dataset.taken) || 0
+      const qty    = Math.max(parseInt(input.value) || 1, taken)
+      const { error } = await db.from('items').update({ quantity: qty }).eq('id', itemId)
+      if (error) { alert('Error saving item quantity: ' + error.message); return }
+    }
+
+    // Close panel and reload dashboard
+    toggleEditPanel(eventId)
+    loadReportDashboard()
+  } finally {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 Save Changes' }
+  }
 }
 
 

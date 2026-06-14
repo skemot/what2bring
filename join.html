@@ -443,16 +443,18 @@ body {
       renderEvent(event, takenIds, signups || [])
 
 
-      // Auto-refresh availability every 30 seconds
+      // Auto-refresh availability every 30 seconds (re-fetches both items and signups
+      // so quantity changes made by the organiser are picked up immediately)
 setInterval(async () => {
   if (selectedItems.length > 0) return // don't refresh if guest is mid-selection
 
-  const { data: freshSignups } = await db
-    .from('signups')
-    .select('id, item_id')
-    .eq('event_id', currentEvent.id)
+  const [{ data: freshEvent }, { data: freshSignups }] = await Promise.all([
+    db.from('events').select('*, items(*)').eq('id', currentEvent.id).single(),
+    db.from('signups').select('id, item_id').eq('event_id', currentEvent.id)
+  ])
 
-  if (freshSignups) {
+  if (freshEvent && freshSignups) {
+    currentEvent = freshEvent
     renderEvent(currentEvent, freshSignups.map(s => s.item_id), freshSignups)
   }
 }, 30000)
