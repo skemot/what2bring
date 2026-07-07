@@ -1032,7 +1032,19 @@ tr:hover td { background: var(--cream); }
     <button class="nav-pill" onclick="showScreen('report')">📊 Report</button>
     <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
   </div>
-  <button class="nav-pill" onclick="openSettings()" style="margin-left:4px;">⚙️ Settings</button>
+  <!-- Signed-out: plain Sign In -->
+  <button id="signin-btn" onclick="openAuth()" class="nav-pill" style="display:none;margin-left:4px;">Sign In</button>
+  <!-- Signed-in: Account dropdown -->
+  <div id="account-dropdown-wrap" style="position:relative;display:none;margin-left:4px;">
+    <button id="account-btn" onclick="toggleAccountDropdown()" class="nav-pill" style="display:flex;align-items:center;gap:5px;">
+      👤 Account <span style="font-size:10px;opacity:0.7;">▾</span>
+    </button>
+    <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:160px;z-index:200;overflow:hidden;">
+      <button onclick="openSettings();closeAccountDropdown()" style="width:100%;text-align:left;padding:12px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--ink);">⚙️ Settings</button>
+      <div style="height:1px;background:var(--border);"></div>
+      <button onclick="signOut()" style="width:100%;text-align:left;padding:12px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--rose);">↩ Sign Out</button>
+    </div>
+  </div>
   <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
 </nav>
 
@@ -1874,16 +1886,32 @@ db.auth.onAuthStateChange((event, session) => {
 })
 
 function updateNavForAuth() {
-  const authBtn = document.getElementById('auth-nav-btn')
-  if (!authBtn) return
+  const signinBtn = document.getElementById('signin-btn')
+  const dropdownWrap = document.getElementById('account-dropdown-wrap')
+  if (!signinBtn || !dropdownWrap) return
   if (currentUser) {
-    authBtn.textContent = 'Sign Out'
-    authBtn.onclick = signOut
+    signinBtn.style.display = 'none'
+    dropdownWrap.style.display = 'block'
   } else {
-    authBtn.textContent = 'Sign In'
-    authBtn.onclick = () => openAuth()
+    signinBtn.style.display = 'block'
+    dropdownWrap.style.display = 'none'
   }
 }
+
+function toggleAccountDropdown() {
+  const menu = document.getElementById('account-menu')
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none'
+}
+
+function closeAccountDropdown() {
+  const menu = document.getElementById('account-menu')
+  if (menu) menu.style.display = 'none'
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('account-dropdown-wrap')
+  if (wrap && !wrap.contains(e.target)) closeAccountDropdown()
+})
 
 function openAuth(mode = 'signin') {
   authMode = mode
