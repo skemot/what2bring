@@ -10,6 +10,13 @@
 <!-- After the qrcode script tag -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
+<script>
+  function categoryOptionsHTML(selected = '') {
+    return CATEGORIES.map(c =>
+      `<option value="${c.value}"${c.value === selected ? ' selected' : ''}>${c.label}</option>`
+    ).join('')
+  }
+</script>
 
 <script>
   // Replace these with YOUR values from Supabase → Settings → API

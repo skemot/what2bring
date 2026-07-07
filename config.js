@@ -16,14 +16,3 @@ const CATEGORIES = [
   { value: 'Ingredients', label: '🥕 Ingredients' },
   { value: 'Other',       label: '📦 Other' },
 ]
-
-// Derived values used by the app — don't edit these
-const CATEGORY_VALUES = CATEGORIES.map(c => c.value)
-
-// Returns <option> tags for a category <select>.
-// Pass the currently selected value to pre-select it.
-function categoryOptionsHTML(selected = '') {
-  return CATEGORIES.map(c =>
-    `<option value="${c.value}"${c.value === selected ? ' selected' : ''}>${c.label}</option>`
-  ).join('')
-}
