@@ -1033,11 +1033,11 @@ tr:hover td { background: var(--cream); }
     <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
   </div>
   <!-- Signed-out: plain Sign In -->
-  <button id="signin-btn" onclick="openAuth()" class="nav-pill" style="display:none;margin-left:4px;">Sign In</button>
+  <button id="signin-btn" onclick="openAuth()" class="nav-cta" style="display:none;">Sign In</button>
   <!-- Signed-in: Account dropdown -->
-  <div id="account-dropdown-wrap" style="position:relative;display:none;margin-left:4px;">
-    <button id="account-btn" onclick="toggleAccountDropdown()" class="nav-pill" style="display:flex;align-items:center;gap:5px;">
-      👤 Account <span style="font-size:10px;opacity:0.7;">▾</span>
+  <div id="account-dropdown-wrap" style="position:relative;display:none;">
+    <button id="account-btn" onclick="toggleAccountDropdown()" class="nav-cta" style="display:flex;align-items:center;gap:5px;">
+      👤 Account <span style="font-size:10px;opacity:0.8;">▾</span>
     </button>
     <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:white;border:1px solid var(--border);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);min-width:160px;z-index:200;overflow:hidden;">
       <button onclick="openSettings();closeAccountDropdown()" style="width:100%;text-align:left;padding:12px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--ink);">⚙️ Settings</button>
@@ -1045,7 +1045,6 @@ tr:hover td { background: var(--cream); }
       <button onclick="signOut()" style="width:100%;text-align:left;padding:12px 16px;background:none;border:none;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--rose);">↩ Sign Out</button>
     </div>
   </div>
-  <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
 </nav>
 
   
