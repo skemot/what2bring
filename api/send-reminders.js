@@ -12,25 +12,28 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-// Cron runs at 23:00 UTC = 9:00 AM AEST (UTC+10).
-// Use AEST date for the "2 days from now" calculation so an event on Saturday
-// gets its reminder on Thursday morning, not Friday.
-const now = new Date()
-const aestNow = new Date(now.getTime() + 10 * 60 * 60 * 1000)
-const in2days = new Date(aestNow)
-in2days.setUTCDate(in2days.getUTCDate() + 2)
-const targetDate = in2days.toISOString().split('T')[0]
+// Support manual trigger with a specific eventId, or fall back to the
+// scheduled cron behaviour (events 2 days away in AEST).
+const manualEventId = req.query.eventId || null
 
-// Get active events on that date
-const { data: events, error } = await db
+let eventsQuery = db
   .from('events')
-  .select(`
-    *,
-    signups(id, guest_name, guest_email, item_id),
-    items(id, name)
-  `)
+  .select(`*, signups(id, guest_name, guest_email, item_id), items(id, name)`)
   .eq('is_active', true)
-  .eq('event_date', targetDate)
+
+if (manualEventId) {
+  eventsQuery = eventsQuery.eq('id', manualEventId)
+} else {
+  // Cron runs at 23:00 UTC = 9:00 AM AEST (UTC+10).
+  const now = new Date()
+  const aestNow = new Date(now.getTime() + 10 * 60 * 60 * 1000)
+  const in2days = new Date(aestNow)
+  in2days.setUTCDate(in2days.getUTCDate() + 2)
+  const targetDate = in2days.toISOString().split('T')[0]
+  eventsQuery = eventsQuery.eq('event_date', targetDate)
+}
+
+const { data: events, error } = await eventsQuery
 
     if (error) {
       console.error('Error fetching events:', error)

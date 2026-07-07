@@ -1,0 +1,115 @@
+BRINGIT LAUNCH FEATURE SPEC (COMPLETE)
+1. ORGANISER INSTRUCTIONS FIELD
+Add optional text field to event creation form. Organiser can enter instructions (max 500 chars) like "Please bring items by 6pm" or "Cold items only". On join page, display instructions prominently above items list. On report dashboard, show in event detail. Field is optional — if empty, don't show on join page. Allow this to be editable in the edit section of the report page
+
+2. MASS EMAIL TO GUESTS
+Add button "Email all guests" in report dashboard. Opens modal with:
+
+To: auto-populated list of all guests with emails from signups
+Subject: text field (pre-filled: "Update about [event name]")
+Message: text area for custom message
+Send and cancel button
+
+On send, emails go out via Resend from noreply@warragulsda.church with organiser name in signature. Show "X emails sent" confirmation. Starter plan: 1 emails/month(to match with i free event per month) Pro plan: unlimited.
+Remember to stagger the delay of the emails or do what ever needs to happen so that emails dont get lost because its faster than the rate the resend accepts.
+
+3. MANUAL REMINDER TRIGGER
+Add button "Send reminders now" in report dashboard next to event name. Clicking triggers the send-reminders.js function immediately (bypasses cron). Shows loading state, then "X reminders sent" confirmation. Useful for testing and re-sending. Agian make sure the emails are staggered to not be restricted if there are 20 emails to be sent.
+
+4. ACCOUNT SETUP / TIMEZONE
+New "Settings" screen for organiser (accessible from nav or profile menu). Fields:
+
+Name (prefilled from auth)
+Email (prefilled, editable)
+Timezone dropdown (Australia/Sydney, US/Eastern, US/Pacific, Europe/London, Asia/Singapore, etc.)
+Save button
+
+Store timezone in profiles table. Use when calculating reminder timing: if event is 2 days away in organiser's timezone, send reminder (not UTC).
+
+5. EVENT COLOR THEME
+Add color picker to event creation form. 12 preset colors (green, blue, rose, purple, amber, etc.) — organiser picks one. Store as theme_color in events table.
+On join page: use selected color for buttons, badges, accents instead of hardcoded green. Make it feel branded to the event.
+Paid feature: Free accounts get 2 colors. Pro accounts get all 12 colors.
+
+6. EVENT LOGO / BANNER (PAID)
+Add file upload field to event creation (optional). Max 2MB, accepted: JPG, PNG. Paid accounts only.
+If uploaded:
+
+Show circular logo (150x150) on join page next to event title
+Show small logo on report dashboard
+Show on share page
+
+Free accounts see placeholder icon.
+
+7. HELP MODALS
+Add "?" icon buttons in two places:
+
+Organiser page: Small help icon next to "Add items" section. Modal explains: "Add items needed for your event. Guests will claim what they'll bring. You can set quantity, category, and whether it's a priority item."
+Join page: Small help icon above items list. Modal explains: "Pick what you'd like to bring. Use +/- buttons to claim multiple of the same item. Priority items (red border) are most needed."
+
+Modals are simple, 2-3 sentences each, closeable via X or background click.
+Add one for the reports page too.
+
+8. GUEST LIST VIEW
+Add "Guest list" section to report dashboard below event detail. Shows table:
+
+Guest name
+Email
+Items claimed (comma-separated with quantities, e.g. "Bread Rolls × 2, Tomatoes × 1")
+Remove guest button (same as current remove functionality)
+
+Can be collapsed/expanded. Sortable by name. Copy guest emails button for bulk communication.
+
+9. AUTO-ARCHIVE EXPIRED EVENTS
+Events expire 7 days after the event date. Add cron job or daily check to move expired events to is_active = false automatically. Organiser sees "Past events" section in report dashboard (already built, just needs auto-archive). does the past events/archives hold the sign ups? past event just need the items that were needed, not who previously signed up for them. Maybe add an export feature to export averyone who siged up might be useful as a print out on the event dat as a ckeckoff sheet. 
+Alternatively: Manual archive button in event detail (see #12).
+
+
+10. MANUAL CLOSE/ARCHIVE EVENT
+Add "Close event" button in report dashboard event header. Clicking shows confirmation: "Close this event? Guests won't be able to sign up anymore, and it will move to past events." On confirm, set is_active = false. Organiser can still edit past events but guests can't join.
+
+11. USE PAST EVENT AS TEMPLATE
+In "Past events" section of report dashboard, add "Duplicate" button next to each past event. Clicking opens "Create new event" form pre-filled with:
+
+Event name (with " (Copy)" appended)
+Categories and items from original event (with quantities, but no signups)
+Organiser instructions
+Color theme
+Logo (if paid account)
+
+Date, time, location left blank for organiser to fill. Saves setup time for recurring events.
+
+12. QR MODAL IN REPORT DASHBOARD
+Add "QR Code" button in event detail (alongside Copy link and Edit). Clicking opens modal showing:
+
+Large QR code (400x400px) linking to join page
+"Copy link" button
+"Download QR" button (saves as PNG)
+Event name + date above QR
+Instruction text: "Share this QR code with guests to let them claim items"
+
+Modal is cleanly designed, mobile-friendly.
+
+13. PRIVACY POLICY + TERMS OF SERVICE
+Add two static pages:
+
+/privacy.html — standard privacy policy covering data collection, email usage, payment processing
+/terms.html — standard terms covering liability, acceptable use, Stripe/Resend disclaimers
+
+Link both in footer. Simple, legal-compliant text (~500 words each).
+
+14. SWITCH STRIPE TO LIVE MODE
+
+Not yet still testing
+
+
+
+
+15
+removal of event types that are all food based. I would like to add other templets insteadof potluck, fete, school etc and have stuff for time sharing or meal train type options or general event where its not just food - so the detail food categories will be shown for teh food events, but a more diverse catergory list will be shwn for the event template like food, equipment, tools, like when organising a fete you need gazebo and tables etc. 
+
+16
+Fix the ability to edit the name of the item in edit mode.
+
+17
+in the sign up sheetm the categories change randomly when the page is refreshed, need to standardise them so it doesn't rotate. sometime mains in on the top other times is desserts etc. maybe use the order that the licategoty drop down is to disokay tehe items in

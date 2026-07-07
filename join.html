@@ -340,6 +340,10 @@ body {
         <div class="input-hint">📧 Enter your email to get a reminder before the event.</div>
       </div>
 
+      <div id="event-instructions-banner" style="display:none;background:var(--warm);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;color:var(--ink);line-height:1.5;">
+        📋 <span id="event-instructions-text"></span>
+      </div>
+
       <div class="section-label" style="margin-top:18px">What can you bring? Pick one:</div>
       <div class="items-container" id="items-container">
         <!-- Items loaded from Supabase -->
@@ -514,6 +518,16 @@ function adjustQty(itemId, delta, maxRemaining) {
     }
     document.getElementById('event-chip').textContent = '📅 ' + dateStr
 
+    // Show instructions if set
+    const banner = document.getElementById('event-instructions-banner')
+    const bannerText = document.getElementById('event-instructions-text')
+    if (event.instructions) {
+      bannerText.textContent = event.instructions
+      banner.style.display = 'block'
+    } else {
+      banner.style.display = 'none'
+    }
+
     // Render items
     const container = document.getElementById('items-container')
     container.innerHTML = ''
@@ -543,7 +557,15 @@ function adjustQty(itemId, delta, maxRemaining) {
 
       const multipleCategories = Object.keys(grouped).length > 1
 
-      Object.entries(grouped).forEach(([category, catItems]) => {
+      // Sort categories in the same fixed order as the organiser dropdown
+      const CATEGORY_ORDER = ['Mains', 'Salads', 'Bread', 'Desserts', 'Drinks', 'Snacks', 'Ingredients', 'Other', 'Items Needed']
+      const sortedCategories = Object.entries(grouped).sort(([a], [b]) => {
+        const ai = CATEGORY_ORDER.indexOf(a)
+        const bi = CATEGORY_ORDER.indexOf(b)
+        return (ai < 0 ? 999 : ai) - (bi < 0 ? 999 : bi)
+      })
+
+      sortedCategories.forEach(([category, catItems]) => {
         if (multipleCategories) {
           const header = document.createElement('div')
           header.className = 'category-header'
