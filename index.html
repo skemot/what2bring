@@ -9,6 +9,7 @@
 
 <!-- After the qrcode script tag -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
 
 <script>
   // Replace these with YOUR values from Supabase → Settings → API
@@ -1390,16 +1391,7 @@ tr:hover td { background: var(--cream); }
 
       
       <select id="item-category-input" style="min-width:130px;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:var(--cream);color:var(--ink);outline:none;cursor:pointer;">
-      <!-- <select id="item-category-input" class="input-field" style="min-width:120px;"> -->
         <option value="">No category</option>
-        <option value="Mains">🍗 Mains</option>
-        <option value="Salads">🥗 Salads</option>
-        <option value="Bread">🍞 Bread</option>
-        <option value="Desserts">🍰 Desserts</option>
-        <option value="Drinks">🥤 Drinks</option>
-        <option value="Snacks">🧀 Snacks</option>
-        <option value="Ingredients">🥕 Ingredients</option>
-        <option value="Other">📦 Other</option>
       </select>
       <button class="btn btn-primary" onclick="addItem()">+ Add</button>
     </div>
@@ -2238,14 +2230,7 @@ function renderActiveEvents(events) {
           </div>
           <select id="edit-new-category-${event.id}" style="padding:9px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);">
             <option value="">No category</option>
-            <option value="Mains">🍗 Mains</option>
-            <option value="Salads">🥗 Salads</option>
-            <option value="Bread">🍞 Bread</option>
-            <option value="Desserts">🍰 Desserts</option>
-            <option value="Drinks">🥤 Drinks</option>
-            <option value="Snacks">🧀 Snacks</option>
-            <option value="Ingredients">🥕 Ingredients</option>
-            <option value="Other">📦 Other</option>
+            ${categoryOptionsHTML()}
           </select>
           <button onclick="addEditItem('${event.id}')" style="padding:9px 16px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
         </div>
@@ -2864,6 +2849,10 @@ function saveItemField(input, type) {
   el.title = 'Click to edit'
 }
   document.addEventListener('DOMContentLoaded', () => {
+    // Populate category dropdown from config.js
+    const catSelect = document.getElementById('item-category-input')
+    if (catSelect) catSelect.insertAdjacentHTML('beforeend', categoryOptionsHTML())
+
     ['item-name-input','item-serves-input'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
