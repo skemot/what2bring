@@ -8,7 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
-  const CATEGORY_VALUES = CATEGORIES.map(c => c.value)
+  // CATEGORY_VALUES is derived per-event from the event type — set in renderEvent
+  let CATEGORY_VALUES = EVENT_TYPES[0].categories
 </script>
 <style>
 :root {
@@ -348,7 +349,10 @@ body {
         📋 <span id="event-instructions-text"></span>
       </div>
 
-      <div class="section-label" style="margin-top:18px">What can you bring? Pick one:</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">
+        <div class="section-label" style="margin:0;">What can you bring? Pick one:</div>
+        <button onclick="document.getElementById('join-help-modal').style.display='flex'" style="background:none;border:1.5px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;" title="How this works">?</button>
+      </div>
       <div class="items-container" id="items-container">
         <!-- Items loaded from Supabase -->
       </div>
@@ -401,6 +405,32 @@ body {
   let selectedItems = [] // change from single selectedItemId to array
 
   // =============================================
+  // THEME
+  // =============================================
+  const THEME_PALETTE = {
+    '#2D6A4F': { light: '#52B788', pale: '#D8F3DC' },
+    '#1B5E8A': { light: '#4A9BC4', pale: '#D0E8F5' },
+    '#6B35C9': { light: '#9B6FE4', pale: '#EDE0FA' },
+    '#C94040': { light: '#E48080', pale: '#FAD8D8' },
+    '#C96B20': { light: '#E4A060', pale: '#FAE8D0' },
+    '#8B6B0B': { light: '#C4A040', pale: '#F5E8C0' },
+    '#1A7A6B': { light: '#40B0A0', pale: '#D0F0EC' },
+    '#8B3A5A': { light: '#C47090', pale: '#F5D8E4' },
+    '#4A4A6A': { light: '#8888A8', pale: '#E0E0F0' },
+    '#2A6B9E': { light: '#60A4D4', pale: '#D0E8F8' },
+    '#5A7A2A': { light: '#90B05A', pale: '#E4EDD0' },
+    '#7A2A2A': { light: '#B05A5A', pale: '#F0D0D0' },
+  }
+
+  function applyTheme(color) {
+    if (!color || !THEME_PALETTE[color]) return
+    const { light, pale } = THEME_PALETTE[color]
+    document.documentElement.style.setProperty('--green', color)
+    document.documentElement.style.setProperty('--green-light', light)
+    document.documentElement.style.setProperty('--green-pale', pale)
+  }
+
+  // =============================================
   // LOAD EVENT FROM URL SLUG
   // =============================================
   async function loadEvent() {
@@ -436,6 +466,7 @@ body {
 
       currentEvent = event
       itemLimit = currentEvent.item_limit || 3
+      applyTheme(event.theme_color)
 
       // Load which items are already taken
       const { data: signups } = await db
@@ -503,10 +534,22 @@ function adjustQty(itemId, delta, maxRemaining) {
 }
   
   function renderEvent(event, takenIds, signups) {
+    // Set category order from the event's type (falls back to potluck order)
+    const eventType = EVENT_TYPES.find(t => t.id === event.event_type) || EVENT_TYPES[0]
+    CATEGORY_VALUES = eventType.categories
+
     // Update header
     document.title = event.name + ' — BringIt'
     document.getElementById('event-name').textContent = event.name
     document.getElementById('event-host').textContent = event.location || ''
+
+    // Show logo or fall back to event type icon
+    const emojiEl = document.getElementById('event-emoji')
+    if (event.logo_url) {
+      emojiEl.innerHTML = `<img src="${event.logo_url}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,0.3);display:inline-block;" />`
+    } else {
+      emojiEl.textContent = eventType.icon
+    }
 
     // Format date nicely
     let dateStr = ''
@@ -821,5 +864,19 @@ const signupRows = selectedItems.flatMap(item =>
   // =============================================
   loadEvent()
 </script>
+
+<!-- HELP MODAL -->
+<div id="join-help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:white;border-radius:20px;padding:28px;width:90%;max-width:380px;position:relative;">
+    <button onclick="document.getElementById('join-help-modal').style.display='none'" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:12px;padding-right:24px;">How it works</div>
+    <div style="font-size:14px;color:#5A5A7A;line-height:1.7;">
+      <b>1. Enter your name</b> — so the organiser knows who's bringing what.<br><br>
+      <b>2. Add your email</b> (optional) — to get a reminder email before the event.<br><br>
+      <b>3. Pick an item</b> — tap any available item to claim it. Fully taken items are shown at the bottom.<br><br>
+      <b>4. Confirm</b> — hit the button and you're done! No account needed.
+    </div>
+  </div>
+</div>
 </body>
 </html>

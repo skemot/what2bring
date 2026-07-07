@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — BringIt</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root { --green: #2D6A4F; --ink: #1A1A2E; --ink-soft: #5A5A7A; --cream: #FAF7F2; --border: #E0D8CE; }
+body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); line-height: 1.7; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 48px 24px 80px; }
+.back { display: inline-flex; align-items: center; gap: 6px; color: var(--green); text-decoration: none; font-size: 14px; font-weight: 600; margin-bottom: 32px; }
+.back:hover { opacity: 0.75; }
+h1 { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+.meta { font-size: 13px; color: var(--ink-soft); margin-bottom: 40px; }
+h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; margin-top: 36px; margin-bottom: 10px; }
+p { margin-bottom: 14px; font-size: 15px; color: #333; }
+ul { padding-left: 20px; margin-bottom: 14px; }
+li { margin-bottom: 6px; font-size: 15px; color: #333; }
+a { color: var(--green); }
+hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+footer { text-align: center; font-size: 13px; color: var(--ink-soft); margin-top: 48px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="/">← Back to BringIt</a>
+
+  <h1>Privacy Policy</h1>
+  <div class="meta">Last updated: 1 July 2025 · Effective immediately</div>
+
+  <p>BringIt ("we", "us", or "our") is committed to protecting your privacy. This policy explains what information we collect, how we use it, and your rights.</p>
+
+  <h2>1. Information We Collect</h2>
+  <p><strong>Organisers</strong> — When you create an account we collect your email address and password (stored securely via Supabase Auth). You may also provide a display name and timezone. We store the events, items, and settings you create.</p>
+  <p><strong>Guests</strong> — When a guest signs up to bring something, we collect their name and (optionally) their email address. Guests do not need to create an account.</p>
+  <p><strong>Usage data</strong> — We collect standard server logs (IP address, browser type, pages visited) for security and debugging purposes.</p>
+
+  <h2>2. How We Use Your Information</h2>
+  <ul>
+    <li>To provide and operate the BringIt service</li>
+    <li>To send event reminder emails to guests who provide their email address</li>
+    <li>To send you transactional emails (signup confirmation, password reset)</li>
+    <li>To process payments via Stripe (we never see or store your card details)</li>
+    <li>To improve the service and diagnose technical issues</li>
+  </ul>
+
+  <h2>3. Email Reminders</h2>
+  <p>Guests who provide their email address may receive a reminder email approximately 2 days before the event they signed up for. This email is sent on behalf of the event organiser. Guests can contact the organiser directly if they wish to be removed from reminders.</p>
+
+  <h2>4. Data Sharing</h2>
+  <p>We do not sell your personal data. We share data only with the following service providers who help us operate BringIt:</p>
+  <ul>
+    <li><strong>Supabase</strong> — database and authentication hosting</li>
+    <li><strong>Vercel</strong> — web hosting and serverless functions</li>
+    <li><strong>Resend</strong> — transactional email delivery</li>
+    <li><strong>Stripe</strong> — payment processing (paid plans only)</li>
+  </ul>
+  <p>Each provider has their own privacy policy and handles data in accordance with applicable laws.</p>
+
+  <h2>5. Data Retention</h2>
+  <p>Event data (including guest names and emails) is retained while the organiser's account is active. Archived events are kept for record-keeping but are no longer publicly accessible. You can request deletion of your data at any time by contacting us.</p>
+
+  <h2>6. Your Rights</h2>
+  <p>Depending on your location you may have the right to access, correct, or delete your personal data. To exercise these rights, contact us at <a href="mailto:hello@bringit.app">hello@bringit.app</a>. We will respond within 30 days.</p>
+
+  <h2>7. Cookies</h2>
+  <p>BringIt uses minimal cookies necessary to keep you signed in (session tokens managed by Supabase Auth). We do not use advertising or tracking cookies.</p>
+
+  <h2>8. Security</h2>
+  <p>We take reasonable technical measures to protect your data, including encrypted connections (HTTPS), secure password hashing, and access controls. No system is 100% secure — if you discover a vulnerability please contact us immediately.</p>
+
+  <h2>9. Children</h2>
+  <p>BringIt is not intended for children under 13. We do not knowingly collect personal information from children. If you believe a child has provided us with their data, contact us and we will delete it promptly.</p>
+
+  <h2>10. Changes to This Policy</h2>
+  <p>We may update this policy from time to time. We will notify registered organisers of significant changes via email. Continued use of BringIt after changes constitutes acceptance of the updated policy.</p>
+
+  <h2>11. Contact</h2>
+  <p>Questions about this policy? Email us at <a href="mailto:hello@bringit.app">hello@bringit.app</a>.</p>
+
+  <hr>
+
+  <footer>
+    <a href="/">BringIt</a> · <a href="/terms.html">Terms of Service</a> · <a href="mailto:hello@bringit.app">Contact</a>
+  </footer>
+</div>
+</body>
+</html>

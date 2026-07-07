@@ -1,67 +1,91 @@
 export default async function handler(req, res) {
-  // Only allow GET requests from Vercel cron
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
   try {
     const { createClient } = await import('@supabase/supabase-js')
-    
+
     const db = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     )
 
-// Support manual trigger with a specific eventId, or fall back to the
-// scheduled cron behaviour (events 2 days away in AEST).
-const manualEventId = req.query.eventId || null
+    const manualEventId = req.query.eventId || null
+    const now = new Date()
 
-let eventsQuery = db
-  .from('events')
-  .select(`*, signups(id, guest_name, guest_email, item_id), items(id, name)`)
-  .eq('is_active', true)
+    // Returns YYYY-MM-DD for "N days from now" in the given IANA timezone.
+    // Uses Intl.DateTimeFormat so DST is handled automatically.
+    function localDatePlusDays(days, timezone) {
+      const future = new Date(now.getTime() + days * 24 * 60 * 60 * 1000)
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(future)
+    }
 
-if (manualEventId) {
-  eventsQuery = eventsQuery.eq('id', manualEventId)
-} else {
-  // Cron runs at 23:00 UTC = 9:00 AM AEST (UTC+10).
-  const now = new Date()
-  const aestNow = new Date(now.getTime() + 10 * 60 * 60 * 1000)
-  const in2days = new Date(aestNow)
-  in2days.setUTCDate(in2days.getUTCDate() + 2)
-  const targetDate = in2days.toISOString().split('T')[0]
-  eventsQuery = eventsQuery.eq('event_date', targetDate)
-}
+    // Fetch all active events
+    let eventsQuery = db
+      .from('events')
+      .select(`*, signups(id, guest_name, guest_email, item_id), items(id, name)`)
+      .eq('is_active', true)
 
-const { data: events, error } = await eventsQuery
+    if (manualEventId) eventsQuery = eventsQuery.eq('id', manualEventId)
 
+    const { data: events, error } = await eventsQuery
     if (error) {
       console.error('Error fetching events:', error)
       return res.status(500).json({ error: error.message })
     }
 
+    if (!events?.length) {
+      return res.status(200).json({ success: true, eventsChecked: 0, emailsSent: 0 })
+    }
+
+    // Batch-fetch organiser timezones from profiles (avoids N+1 queries)
+    const userIds = [...new Set(events.map(e => e.user_id).filter(Boolean))]
+    const { data: profiles } = await db
+      .from('profiles')
+      .select('id, timezone')
+      .in('id', userIds)
+    const tzByUser = Object.fromEntries(
+      (profiles || []).map(p => [p.id, p.timezone || 'Australia/Melbourne'])
+    )
+
     let emailsSent = 0
+    let eventsChecked = 0
 
     for (const event of events) {
-      // Get unique guests with emails
+      const timezone = tzByUser[event.user_id] || 'Australia/Melbourne'
+
+      // For scheduled runs: only send if the event is 2 days away in the organiser's timezone.
+      // Cron fires at 23:00 UTC (= 9am AEST). Send time varies by timezone but is always morning
+      // for AU/NZ organisers. US/Europe support will be added later with an hourly cron.
+      if (!manualEventId && event.event_date !== localDatePlusDays(2, timezone)) continue
+
+      eventsChecked++
+
+      // Collect unique guests with emails, grouping their items
       const guestsWithEmail = {}
       for (const signup of event.signups || []) {
-        if (signup.guest_email && !guestsWithEmail[signup.guest_email]) {
+        if (!signup.guest_email) continue
+        if (!guestsWithEmail[signup.guest_email]) {
           guestsWithEmail[signup.guest_email] = {
             name: signup.guest_name,
             email: signup.guest_email,
             items: []
           }
         }
-        if (signup.guest_email) {
-          const item = event.items?.find(i => i.id === signup.item_id)
-          if (item) guestsWithEmail[signup.guest_email].items.push(item.name)
-        }
+        const item = event.items?.find(i => i.id === signup.item_id)
+        if (item) guestsWithEmail[signup.guest_email].items.push(item.name)
       }
 
-      // Send reminder to each guest — 600ms delay between sends to stay under Resend's 2/sec limit
       for (const guest of Object.values(guestsWithEmail)) {
+        // 600ms delay between sends to stay within Resend's 2 req/sec rate limit
         await new Promise(resolve => setTimeout(resolve, 600))
+
         const itemList = guest.items.map(i => `<li><strong>${i}</strong></li>`).join('')
         const eventDate = new Date(event.event_date + 'T00:00:00')
           .toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -84,6 +108,7 @@ const { data: events, error } = await eventsQuery
             `
           })
         })
+
         if (!emailRes.ok) {
           const errText = await emailRes.text()
           console.error(`Failed reminder to ${guest.email}: ${emailRes.status} ${errText}`)
@@ -93,11 +118,7 @@ const { data: events, error } = await eventsQuery
       }
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      eventsChecked: events.length,
-      emailsSent 
-    })
+    return res.status(200).json({ success: true, eventsChecked, emailsSent })
 
   } catch (err) {
     console.error('Cron error:', err)

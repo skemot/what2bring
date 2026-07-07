@@ -11,9 +11,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
-  function categoryOptionsHTML(selected = '') {
-    return CATEGORIES.map(c =>
-      `<option value="${c.value}"${c.value === selected ? ' selected' : ''}>${c.label}</option>`
+  function categoryOptionsHTML(categories, selected = '') {
+    const cats = (categories && categories.length) ? categories : EVENT_TYPES[0].categories
+    return cats.map(c =>
+      `<option value="${c}"${c === selected ? ' selected' : ''}>${c}</option>`
     ).join('')
   }
 </script>
@@ -1031,6 +1032,7 @@ tr:hover td { background: var(--cream); }
     <button class="nav-pill" onclick="showScreen('report')">📊 Report</button>
     <button class="nav-pill" onclick="showScreen('scan')">📱 Guest Scan View</button>
   </div>
+  <button class="nav-pill" onclick="openSettings()" style="margin-left:4px;">⚙️ Settings</button>
   <button class="nav-cta" id="auth-nav-btn" onclick="handleCreateEvent()">Create Event →</button>
 </nav>
 
@@ -1095,8 +1097,104 @@ tr:hover td { background: var(--cream); }
     </button>
   </div>
 </div>
-  
 
+<!-- HELP MODAL -->
+<div id="help-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeHelp()">
+  <div style="background:white;border-radius:20px;padding:28px;width:90%;max-width:420px;position:relative;">
+    <button onclick="closeHelp()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div id="help-modal-title" style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:12px;padding-right:24px;"></div>
+    <div id="help-modal-body" style="font-size:14px;color:#5A5A7A;line-height:1.7;"></div>
+  </div>
+</div>
+
+<!-- MASS EMAIL MODAL -->
+<div id="mass-email-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeMassEmail()">
+  <div style="background:white;border-radius:20px;padding:28px;width:90%;max-width:480px;position:relative;">
+    <button onclick="closeMassEmail()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:4px;padding-right:24px;">📧 Email Guests</div>
+    <div id="mass-email-count" style="font-size:12px;color:#5A5A7A;margin-bottom:16px;"></div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:4px;">TO</label>
+      <div id="mass-email-to" style="font-size:12px;color:#5A5A7A;background:#FAF7F2;border:1.5px solid #E0D8CE;border-radius:10px;padding:9px 12px;line-height:1.6;max-height:72px;overflow-y:auto;word-break:break-all;"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:4px;">SUBJECT</label>
+      <input id="mass-email-subject" type="text" style="width:100%;padding:10px 12px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;" />
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:4px;">MESSAGE</label>
+      <textarea id="mass-email-body" rows="5" style="width:100%;padding:10px 12px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;resize:vertical;outline:none;"></textarea>
+    </div>
+    <div id="mass-email-status" style="font-size:13px;color:#2D6A4F;margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeMassEmail()" style="padding:10px 18px;background:#FAF7F2;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">Cancel</button>
+      <button id="mass-email-send-btn" onclick="sendMassEmail()" style="padding:10px 18px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Send Emails</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeSettings()">
+  <div style="background:white;border-radius:20px;padding:28px;width:90%;max-width:440px;position:relative;">
+    <button onclick="closeSettings()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div style="font-family:'Fraunces',serif;font-size:20px;font-weight:700;margin-bottom:4px;">⚙️ Settings</div>
+    <div style="font-size:13px;color:#5A5A7A;margin-bottom:20px;">Your organiser profile</div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:5px;">DISPLAY NAME</label>
+      <input id="settings-name" type="text" placeholder="e.g. Sarah Mitchell" style="width:100%;padding:10px 12px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;" />
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:5px;">EMAIL</label>
+      <input id="settings-email" type="email" disabled style="width:100%;padding:10px 12px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:#F5F5F5;color:#888;" />
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:12px;font-weight:600;color:#5A5A7A;display:block;margin-bottom:5px;">TIMEZONE (for reminder emails)</label>
+      <select id="settings-timezone" style="width:100%;padding:10px 12px;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;background:white;color:#1A1A2E;outline:none;">
+        <optgroup label="🇦🇺 Australia">
+          <option value="Australia/Melbourne">AEST/AEDT — Melbourne, Sydney, Canberra, Hobart</option>
+          <option value="Australia/Brisbane">AEST — Brisbane, Queensland (no DST)</option>
+          <option value="Australia/Adelaide">ACST/ACDT — Adelaide</option>
+          <option value="Australia/Darwin">ACST — Darwin (no DST)</option>
+          <option value="Australia/Perth">AWST — Perth, Western Australia</option>
+        </optgroup>
+        <optgroup label="🇳🇿 New Zealand">
+          <option value="Pacific/Auckland">NZST/NZDT — Auckland, Wellington, Christchurch</option>
+        </optgroup>
+        <optgroup label="🇬🇧 🇮🇪 UK & Ireland">
+          <option value="Europe/London">GMT/BST — London, Dublin, Edinburgh</option>
+        </optgroup>
+        <optgroup label="🇪🇺 Europe">
+          <option value="Europe/Paris">CET/CEST — Paris, Berlin, Rome, Madrid, Amsterdam</option>
+          <option value="Europe/Helsinki">EET/EEST — Helsinki, Athens, Tallinn, Riga</option>
+        </optgroup>
+        <optgroup label="🇺🇸 United States">
+          <option value="America/New_York">ET — New York, Boston, Miami, Atlanta</option>
+          <option value="America/Chicago">CT — Chicago, Houston, Dallas, Minneapolis</option>
+          <option value="America/Denver">MT — Denver, Salt Lake City, Boise</option>
+          <option value="America/Phoenix">MST — Phoenix, Arizona (no DST)</option>
+          <option value="America/Los_Angeles">PT — Los Angeles, Seattle, San Francisco</option>
+          <option value="America/Anchorage">AKT — Anchorage, Alaska</option>
+          <option value="Pacific/Honolulu">HST — Hawaii (no DST)</option>
+        </optgroup>
+        <optgroup label="🇨🇦 Canada">
+          <option value="America/Toronto">ET — Toronto, Ottawa, Montreal</option>
+          <option value="America/Winnipeg">CT — Winnipeg, Regina</option>
+          <option value="America/Edmonton">MT — Edmonton, Calgary</option>
+          <option value="America/Vancouver">PT — Vancouver, Victoria</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option value="UTC">UTC — Universal Time</option>
+        </optgroup>
+      </select>
+      <div style="font-size:11px;color:#5A5A7A;margin-top:5px;">Reminder emails go out at 9am in your local time, 2 days before the event.</div>
+    </div>
+    <div id="settings-status" style="font-size:13px;color:#2D6A4F;margin-bottom:10px;display:none;"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeSettings()" style="padding:10px 18px;background:#FAF7F2;border:1.5px solid #E0D8CE;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">Cancel</button>
+      <button onclick="saveSettings()" style="padding:10px 18px;background:#2D6A4F;color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;">Save</button>
+    </div>
+  </div>
+</div>
 
 <!-- ============================================================ -->
 <!-- LANDING PAGE                                                -->
@@ -1301,6 +1399,20 @@ tr:hover td { background: var(--cream); }
     <p style="text-align:center;font-size:13px;color:var(--ink-soft);margin-top:20px;">No credit card required to start. Cancel any time. Guests always use BringIt for free.</p>
   </div>
 
+  <!-- Footer -->
+  <div style="text-align:center;padding:40px 24px 24px;border-top:1px solid var(--border);margin-top:48px;">
+    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green);margin-bottom:8px;">🍽️ BringIt</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Making shared events easy, one item at a time.</div>
+    <div style="display:flex;justify-content:center;gap:20px;font-size:13px;">
+      <a href="/privacy.html" style="color:var(--ink-soft);text-decoration:none;">Privacy Policy</a>
+      <span style="color:var(--border);">·</span>
+      <a href="/terms.html" style="color:var(--ink-soft);text-decoration:none;">Terms of Service</a>
+      <span style="color:var(--border);">·</span>
+      <a href="mailto:hello@bringit.app" style="color:var(--ink-soft);text-decoration:none;">Contact</a>
+    </div>
+    <div style="font-size:11px;color:var(--border);margin-top:16px;">© 2025 BringIt. All rights reserved.</div>
+  </div>
+
 </div>
 </div>
 
@@ -1324,16 +1436,9 @@ tr:hover td { background: var(--cream); }
   <!-- Event type -->
   <div class="card">
     <div class="card-title">🎯 What kind of event?</div>
-    <div class="category-grid">
-      <button class="category-btn active" onclick="selectCat(this)"><span class="cat-icon">🍽️</span>Potluck / Party</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">🎒</span>School Event</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">⚽</span>Sports / Club</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">💼</span>Workplace</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">💛</span>Caregiving</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">💍</span>Wedding / Shower</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">🙏</span>Community / Faith</button>
-      <button class="category-btn" onclick="selectCat(this)"><span class="cat-icon">✏️</span>Other</button>
-    </div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">The item category list adapts to your event type.</div>
+    <input type="hidden" id="event-type-input" value="potluck" />
+    <div class="category-grid" id="event-type-grid"></div>
   </div>
 
   <!-- Details -->
@@ -1385,9 +1490,38 @@ tr:hover td { background: var(--cream); }
     </div>
   </div>
 
+  <!-- Colour Theme -->
+  <div class="card">
+    <div class="card-title">🎨 Event Colour</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Customise the look of your guest sign-up page. First 2 are free, all 12 on Pro.</div>
+    <input type="hidden" id="event-theme-color" value="#2D6A4F" />
+    <div id="color-swatches-create" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+  </div>
+
+  <!-- Logo -->
+  <div class="card">
+    <div class="card-title" style="display:flex;align-items:center;gap:8px;">🖼️ Event Logo <span style="font-size:11px;font-weight:500;background:var(--green-pale);color:var(--green);padding:2px 8px;border-radius:20px;">Starter &amp; Pro</span></div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Circular logo shown at the top of the guest sign-up page. JPG, PNG or WebP · max 2MB.</div>
+    <input type="hidden" id="event-logo-url" value="" />
+    <input type="file" id="logo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleLogoUpload(this)" />
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div id="logo-preview-wrap" style="width:72px;height:72px;border-radius:50%;border:2px dashed var(--border);background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">
+        <span id="logo-empty-icon" style="font-size:26px;line-height:1;">🖼️</span>
+        <img id="logo-preview-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;" />
+      </div>
+      <div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+          <button type="button" onclick="triggerLogoUpload()" class="btn btn-secondary btn-sm">📷 Upload Logo</button>
+          <button type="button" onclick="removeLogo()" id="logo-remove-btn" style="display:none;padding:5px 12px;background:none;border:1px solid var(--rose);border-radius:8px;color:var(--rose);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;">Remove</button>
+        </div>
+        <div id="logo-upload-status" style="font-size:12px;color:var(--ink-soft);"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Items -->
   <div class="card">
-    <div class="card-title">🍽️ Items Needed</div>
+    <div class="card-title" style="display:flex;align-items:center;gap:8px;">🍽️ Items Needed <button onclick="showHelp('items')" style="background:none;border:1.5px solid var(--border);border-radius:50%;width:20px;height:20px;font-size:11px;font-weight:700;cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0;line-height:1;flex-shrink:0;" title="Help">?</button></div>
     <div class="items-list" id="items-list">
       
     </div>
@@ -1484,7 +1618,7 @@ tr:hover td { background: var(--cream); }
   <div class="screen" id="screen-report">
   <div style="max-width:1060px;margin:0 auto;padding:32px 24px 60px;">
     <div class="page-header">
-      <div class="page-title">My Events</div>
+      <div style="display:flex;align-items:center;gap:8px;"><div class="page-title">My Events</div><button onclick="showHelp('report')" style="background:none;border:1.5px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;" title="Help">?</button></div>
       <div class="page-subtitle">Track your active events and view past ones.</div>
     </div>
 
@@ -2182,6 +2316,11 @@ function renderActiveEvents(events) {
           <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Instructions for guests (optional)</label>
           <textarea id="edit-instructions-${event.id}" maxlength="500" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:14px;margin-top:4px;box-sizing:border-box;resize:vertical;min-height:60px;">${event.instructions || ''}</textarea>
         </div>
+        <div style="margin-bottom:20px;">
+          <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">Event Colour</label>
+          <input type="hidden" id="edit-theme-color-${event.id}" value="${event.theme_color || '#2D6A4F'}" />
+          <div id="color-swatches-edit-${event.id}" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;"></div>
+        </div>
 
         <!-- Items list -->
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Items</div>
@@ -2252,7 +2391,7 @@ function renderActiveEvents(events) {
           </div>
           <select id="edit-new-category-${event.id}" style="padding:9px 8px;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;background:var(--cream);">
             <option value="">No category</option>
-            ${categoryOptionsHTML()}
+            ${categoryOptionsHTML(EVENT_TYPES.find(t => t.id === event.event_type)?.categories)}
           </select>
           <button onclick="addEditItem('${event.id}')" style="padding:9px 16px;background:var(--green);color:white;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
         </div>
@@ -2367,7 +2506,10 @@ function renderEventDetail(event) {
     <div style="margin-top:16px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">👥 Guest List (${guestList.length})</div>
-        ${emails.length ? `<button onclick="navigator.clipboard.writeText('${emails.join(', ')}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='📋 Copy emails',2000)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Copy emails</button>` : ''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${emails.length ? `<button onclick="navigator.clipboard.writeText('${emails.join(', ')}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='📋 Copy emails',2000)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Copy emails</button>` : ''}
+          ${emails.length ? `<button onclick="showMassEmail('${event.id}', ${JSON.stringify(emails)}, '${(event.name||'').replace(/'/g,"\\'")}', '${event.event_date||''}')" style="background:var(--green-pale);color:var(--green);border:none;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">📧 Email guests</button>` : ''}
+        </div>
       </div>
       <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
         <table style="width:100%;border-collapse:collapse;">
@@ -2391,6 +2533,10 @@ function renderEventDetail(event) {
   const panel = document.getElementById(`edit-${eventId}`)
   const isOpen = panel.style.display !== 'none'
   panel.style.display = isOpen ? 'none' : 'block'
+  if (!isOpen) {
+    const currentHex = document.getElementById(`edit-theme-color-${eventId}`)?.value || '#2D6A4F'
+    populateColorSwatches(`color-swatches-edit-${eventId}`, currentHex)
+  }
 }
 
 async function sendRemindersNow(eventId, btn) {
@@ -2479,6 +2625,7 @@ async function saveEditChanges(eventId) {
   const time         = document.getElementById(`edit-time-${eventId}`).value
   const location     = document.getElementById(`edit-location-${eventId}`).value.trim()
   const instructions = document.getElementById(`edit-instructions-${eventId}`)?.value.trim() || null
+  const theme_color  = document.getElementById(`edit-theme-color-${eventId}`)?.value || '#2D6A4F'
 
   if (!name || !date) { alert('Please fill in event name and date.'); return }
 
@@ -2489,7 +2636,7 @@ async function saveEditChanges(eventId) {
     // Update event details
     const { error: eventError } = await db
       .from('events')
-      .update({ name, event_date: date, event_time: time, location, instructions })
+      .update({ name, event_date: date, event_time: time, location, instructions, theme_color })
       .eq('id', eventId)
 
     if (eventError) { alert('Error saving event: ' + eventError.message); return }
@@ -2575,6 +2722,14 @@ function useAsTemplate(event) {
   document.getElementById('item-limit-input').value = event.item_limit || 1
   const instrEl = document.getElementById('event-instructions-input')
   if (instrEl) instrEl.value = event.instructions || ''
+
+  // Restore event type
+  selectEventType(event.event_type || 'potluck')
+
+  // Restore theme colour
+  const selectedHex = event.theme_color || '#2D6A4F'
+  document.getElementById('event-theme-color').value = selectedHex
+  populateColorSwatches('color-swatches-create', selectedHex)
 
   // Clear existing items and populate from template (no itemId = treated as new on save)
   const itemsList = document.getElementById('items-list')
@@ -2690,6 +2845,20 @@ async function removeGuest(signupId, eventId) {
   document.getElementById('event-location-input').value = event.location || ''
   document.getElementById('organiser-email-input').value = event.organiser_email || ''
   document.getElementById('item-limit-input').value = event.item_limit || 1
+  const instrEl2 = document.getElementById('event-instructions-input')
+  if (instrEl2) instrEl2.value = event.instructions || ''
+
+  // Restore event type
+  selectEventType(event.event_type || 'potluck')
+
+  // Restore theme colour
+  const editHex = event.theme_color || '#2D6A4F'
+  document.getElementById('event-theme-color').value = editHex
+  populateColorSwatches('color-swatches-create', editHex)
+
+  // Restore logo
+  setLogoPreview(event.logo_url || null)
+  document.getElementById('logo-upload-status').textContent = ''
 
   // Clear and repopulate items list
   const itemsList = document.getElementById('items-list')
@@ -2747,6 +2916,9 @@ async function saveEventChanges() {
   const organiserEmail = document.getElementById('organiser-email-input').value.trim()
   const itemLimit     = parseInt(document.getElementById('item-limit-input').value)
   const instructions  = document.getElementById('event-instructions-input')?.value.trim() || null
+  const theme_color   = document.getElementById('event-theme-color')?.value || '#2D6A4F'
+  const event_type    = document.getElementById('event-type-input')?.value || 'potluck'
+  const logo_url      = document.getElementById('event-logo-url')?.value || null
 
   if (!name || !date) {
     alert('Please fill in at least the event name and date.')
@@ -2760,7 +2932,7 @@ async function saveEventChanges() {
   // Update event details
   const { error: eventError } = await db
     .from('events')
-    .update({ name, event_date: date, event_time: time, location, organiser_email: organiserEmail, item_limit: itemLimit, instructions })
+    .update({ name, event_date: date, event_time: time, location, organiser_email: organiserEmail, item_limit: itemLimit, instructions, theme_color, event_type, logo_url })
     .eq('id', eventId)
 
   if (eventError) {
@@ -2886,9 +3058,22 @@ function copyLink() {
   }
 
   // Category selector
-  function selectCat(btn) {
-    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+  function populateCategoryDropdown(categories) {
+    const catSelect = document.getElementById('item-category-input')
+    if (!catSelect) return
+    const cats = (categories && categories.length) ? categories : EVENT_TYPES[0].categories
+    catSelect.innerHTML = '<option value="">No category</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('')
+  }
+
+  function selectEventType(typeId) {
+    const type = EVENT_TYPES.find(t => t.id === typeId)
+    if (!type) return
+    document.querySelectorAll('#event-type-grid .category-btn').forEach(b => b.classList.remove('active'))
+    const btn = document.querySelector(`#event-type-grid [data-type-id="${typeId}"]`)
+    if (btn) btn.classList.add('active')
+    document.getElementById('event-type-input').value = typeId
+    populateCategoryDropdown(type.categories)
   }
 
   // Add item
@@ -2977,14 +3162,26 @@ function saveItemField(input, type) {
   el.title = 'Click to edit'
 }
   document.addEventListener('DOMContentLoaded', () => {
-    // Populate category dropdown from config.js
-    const catSelect = document.getElementById('item-category-input')
-    if (catSelect) catSelect.insertAdjacentHTML('beforeend', categoryOptionsHTML())
+    // Build event type picker from config.js
+    const grid = document.getElementById('event-type-grid')
+    if (grid) {
+      grid.innerHTML = EVENT_TYPES.map(t =>
+        `<button class="category-btn${t.id === 'potluck' ? ' active' : ''}" data-type-id="${t.id}" onclick="selectEventType('${t.id}')">
+          <span class="cat-icon">${t.icon}</span>${t.label}
+        </button>`
+      ).join('')
+    }
+
+    // Populate category dropdown with default type (potluck)
+    populateCategoryDropdown(EVENT_TYPES[0].categories)
 
     ['item-name-input','item-serves-input'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
     });
+
+    // Populate colour swatches for the create form
+    populateColorSwatches('color-swatches-create', '#2D6A4F')
   });
 
   function editCategoryField(el) {
@@ -3049,6 +3246,9 @@ function saveCategoryField(select) {
   const itemLimit = parseInt(document.getElementById('item-limit-input').value)
   
   const instructions = document.getElementById('event-instructions-input')?.value.trim() || null
+  const theme_color  = document.getElementById('event-theme-color')?.value || '#2D6A4F'
+  const event_type   = document.getElementById('event-type-input')?.value || 'potluck'
+  const logo_url     = document.getElementById('event-logo-url')?.value || null
 
   const result = await db
     .from('events')
@@ -3062,6 +3262,9 @@ function saveCategoryField(select) {
       slug,
       item_limit: itemLimit,
       instructions,
+      theme_color,
+      event_type,
+      logo_url,
       is_active: true
     })
     .select()
@@ -3200,6 +3403,270 @@ async function scanSubmit() {
     btn.classList.add('active')
   }
 
+// =============================================
+// LOGO UPLOAD
+// =============================================
+async function triggerLogoUpload() {
+  if (!currentUser) { showAuthModal(); return }
+  const profile = await getUserPlan()
+  if (!profile || profile.plan === 'free') {
+    showUpgradePrompt('Event logos are available on the Starter and Pro plans.')
+    return
+  }
+  document.getElementById('logo-file-input').click()
+}
+
+async function handleLogoUpload(input) {
+  const file = input.files[0]
+  if (!file) return
+  const status = document.getElementById('logo-upload-status')
+
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    status.textContent = '❌ Please use a JPG, PNG or WebP image.'
+    status.style.color = 'var(--rose)'
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    status.textContent = '❌ Image must be under 2MB.'
+    status.style.color = 'var(--rose)'
+    return
+  }
+
+  status.textContent = '⏳ Uploading...'
+  status.style.color = 'var(--ink-soft)'
+
+  const ext = file.name.split('.').pop().toLowerCase()
+  const path = `${currentUser.id}/${Date.now()}.${ext}`
+
+  const { error } = await db.storage.from('event-logos').upload(path, file, { upsert: true })
+  if (error) {
+    status.textContent = '❌ Upload failed: ' + error.message
+    status.style.color = 'var(--rose)'
+    return
+  }
+
+  const { data: urlData } = db.storage.from('event-logos').getPublicUrl(path)
+  setLogoPreview(urlData.publicUrl)
+  status.textContent = '✓ Logo uploaded'
+  status.style.color = 'var(--green)'
+}
+
+function setLogoPreview(url) {
+  document.getElementById('event-logo-url').value = url || ''
+  const img = document.getElementById('logo-preview-img')
+  const icon = document.getElementById('logo-empty-icon')
+  const removeBtn = document.getElementById('logo-remove-btn')
+  if (url) {
+    img.src = url
+    img.style.display = 'block'
+    icon.style.display = 'none'
+    removeBtn.style.display = 'inline-block'
+  } else {
+    img.src = ''
+    img.style.display = 'none'
+    icon.style.display = 'block'
+    removeBtn.style.display = 'none'
+  }
+}
+
+function removeLogo() {
+  setLogoPreview(null)
+  document.getElementById('logo-file-input').value = ''
+  document.getElementById('logo-upload-status').textContent = ''
+}
+
+// =============================================
+// COLOUR THEME
+// =============================================
+const THEME_COLORS = [
+  { hex: '#2D6A4F', light: '#52B788', pale: '#D8F3DC', label: 'Forest',  pro: false },
+  { hex: '#1B5E8A', light: '#4A9BC4', pale: '#D0E8F5', label: 'Ocean',   pro: false },
+  { hex: '#6B35C9', light: '#9B6FE4', pale: '#EDE0FA', label: 'Plum',    pro: true  },
+  { hex: '#C94040', light: '#E48080', pale: '#FAD8D8', label: 'Ruby',    pro: true  },
+  { hex: '#C96B20', light: '#E4A060', pale: '#FAE8D0', label: 'Amber',   pro: true  },
+  { hex: '#8B6B0B', light: '#C4A040', pale: '#F5E8C0', label: 'Gold',    pro: true  },
+  { hex: '#1A7A6B', light: '#40B0A0', pale: '#D0F0EC', label: 'Teal',    pro: true  },
+  { hex: '#8B3A5A', light: '#C47090', pale: '#F5D8E4', label: 'Berry',   pro: true  },
+  { hex: '#4A4A6A', light: '#8888A8', pale: '#E0E0F0', label: 'Slate',   pro: true  },
+  { hex: '#2A6B9E', light: '#60A4D4', pale: '#D0E8F8', label: 'Sky',     pro: true  },
+  { hex: '#5A7A2A', light: '#90B05A', pale: '#E4EDD0', label: 'Olive',   pro: true  },
+  { hex: '#7A2A2A', light: '#B05A5A', pale: '#F0D0D0', label: 'Wine',    pro: true  },
+]
+
+function populateColorSwatches(containerId, selectedHex) {
+  const container = document.getElementById(containerId)
+  if (!container) return
+  container.innerHTML = THEME_COLORS.map(c => `
+    <div style="position:relative;display:inline-block;">
+      <button type="button"
+        class="color-swatch-btn"
+        data-hex="${c.hex}"
+        data-pro="${c.pro}"
+        onclick="selectThemeColor('${containerId}','${c.hex}',${c.pro})"
+        title="${c.label}${c.pro ? ' — Pro' : ''}"
+        style="width:34px;height:34px;border-radius:50%;background:${c.hex};border:3px solid transparent;cursor:pointer;transition:all 0.15s;display:block;box-shadow:${selectedHex===c.hex?`0 0 0 3px ${c.hex},0 0 0 5px white`:''};outline:${selectedHex===c.hex?`3px solid ${c.hex}`:'none'};outline-offset:2px;"
+      ></button>
+      ${c.pro ? `<span style="position:absolute;bottom:-1px;right:-1px;background:white;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;pointer-events:none;border:1px solid #ddd;line-height:1;">🔒</span>` : ''}
+    </div>
+  `).join('')
+}
+
+async function selectThemeColor(containerId, hex, proOnly = false) {
+  if (proOnly) {
+    const profile = await getUserPlan()
+    if (!profile || profile.plan !== 'pro') {
+      showUpgradePrompt('Unlock all 12 colour themes with the Pro plan.')
+      return
+    }
+  }
+  // Update all swatches in this container
+  document.querySelectorAll(`#${containerId} .color-swatch-btn`).forEach(btn => {
+    btn.style.outline = 'none'
+    btn.style.outlineOffset = '0'
+  })
+  const activeBtn = document.querySelector(`#${containerId} .color-swatch-btn[data-hex="${hex}"]`)
+  if (activeBtn) {
+    activeBtn.style.outline = `3px solid ${hex}`
+    activeBtn.style.outlineOffset = '2px'
+  }
+  // Write to the hidden input in the same form context
+  const input = containerId === 'color-swatches-create'
+    ? document.getElementById('event-theme-color')
+    : document.getElementById(`edit-theme-color-${containerId.replace('color-swatches-edit-', '')}`)
+  if (input) input.value = hex
+}
+
+// =============================================
+// HELP MODALS
+// =============================================
+const HELP_CONTENT = {
+  items: {
+    title: '🍽️ Adding Items',
+    body: `<b>Items</b> are the things you need guests to bring. Each item can have a quantity — if set to 2, two different guests can each claim one.<br><br>
+<b>Categories</b> group your items (Mains, Salads, Desserts, etc.) so the sign-up page is easy to navigate.<br><br>
+<b>Tip:</b> Add specific, descriptive names like "Potato Salad (serves 8)" so guests know exactly what to bring.`
+  },
+  report: {
+    title: '📊 My Events',
+    body: `<b>Active events</b> are live and accepting sign-ups. Click on any event to expand and see the full guest list, items status, and management options.<br><br>
+<b>Past events</b> are automatically archived 7 days after the event date. You can use "Use as template" to duplicate a past event.<br><br>
+<b>Tip:</b> Use "Send reminders now" to manually trigger a reminder email to all guests who provided their email.`
+  }
+}
+
+function showHelp(topic) {
+  const content = HELP_CONTENT[topic]
+  if (!content) return
+  document.getElementById('help-modal-title').textContent = content.title
+  document.getElementById('help-modal-body').innerHTML = content.body
+  document.getElementById('help-modal').style.display = 'flex'
+}
+
+function closeHelp() {
+  document.getElementById('help-modal').style.display = 'none'
+}
+
+// =============================================
+// MASS EMAIL
+// =============================================
+let _massEmailEventId = null
+let _massEmailAddresses = []
+
+function showMassEmail(eventId, emails, eventName, eventDate) {
+  if (!currentUser) { showAuthModal(); return }
+  _massEmailEventId = eventId
+  _massEmailAddresses = emails
+  const dateStr = eventDate ? new Date(eventDate + 'T00:00:00').toLocaleDateString('en-AU', { weekday:'long', day:'numeric', month:'long' }) : ''
+  document.getElementById('mass-email-count').textContent = `${emails.length} guest${emails.length !== 1 ? 's' : ''} with email addresses`
+  document.getElementById('mass-email-to').textContent = emails.join(', ')
+  document.getElementById('mass-email-subject').value = `Reminder: ${eventName}${dateStr ? ' — ' + dateStr : ''}`
+  document.getElementById('mass-email-body').value = `Hi there,\n\nJust a friendly reminder about ${eventName}${dateStr ? ' on ' + dateStr : ''}.\n\nPlease remember to bring what you signed up for. We're looking forward to seeing you!\n\nThanks,\nThe Organiser`
+  document.getElementById('mass-email-status').style.display = 'none'
+  document.getElementById('mass-email-send-btn').disabled = false
+  document.getElementById('mass-email-send-btn').textContent = 'Send Emails'
+  document.getElementById('mass-email-modal').style.display = 'flex'
+}
+
+function closeMassEmail() {
+  document.getElementById('mass-email-modal').style.display = 'none'
+}
+
+async function sendMassEmail() {
+  const subject = document.getElementById('mass-email-subject').value.trim()
+  const body = document.getElementById('mass-email-body').value.trim()
+  if (!subject || !body) { alert('Please fill in subject and message.'); return }
+  if (!_massEmailAddresses.length) { alert('No email addresses to send to.'); return }
+
+  const btn = document.getElementById('mass-email-send-btn')
+  const status = document.getElementById('mass-email-status')
+  btn.disabled = true
+  btn.textContent = '⏳ Sending...'
+  status.style.display = 'none'
+
+  const SUPABASE_URL = 'https://rucolysccqhtifdkronr.supabase.co'
+  const SUPABASE_ANON_KEY = 'sb_publishable_98jnCXLPnCHo191NM2Yk5Q_gtOLfhB4'
+  let sent = 0, failed = 0
+
+  for (const email of _massEmailAddresses) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+        body: JSON.stringify({
+          to: email,
+          subject,
+          html: body.replace(/\n/g, '<br>')
+        })
+      })
+      if (res.ok) sent++; else failed++
+    } catch { failed++ }
+    await new Promise(r => setTimeout(r, 600))
+  }
+
+  status.textContent = sent > 0
+    ? `✓ ${sent} email${sent !== 1 ? 's' : ''} sent${failed > 0 ? ` (${failed} failed)` : ''}`
+    : `Failed to send emails. Please try again.`
+  status.style.color = sent > 0 ? '#2D6A4F' : '#C9474D'
+  status.style.display = 'block'
+  btn.textContent = 'Done'
+  setTimeout(() => { closeMassEmail() }, 2500)
+}
+
+// =============================================
+// SETTINGS
+// =============================================
+async function openSettings() {
+  if (!currentUser) { showAuthModal(); return }
+  document.getElementById('settings-email').value = currentUser.email || ''
+  const { data } = await db.from('profiles').select('display_name, timezone').eq('id', currentUser.id).single()
+  document.getElementById('settings-name').value = data?.display_name || ''
+  const tz = data?.timezone || 'Australia/Melbourne'
+  const sel = document.getElementById('settings-timezone')
+  for (const opt of sel.options) { if (opt.value === tz) { opt.selected = true; break } }
+  document.getElementById('settings-status').style.display = 'none'
+  document.getElementById('settings-modal').style.display = 'flex'
+}
+
+function closeSettings() {
+  document.getElementById('settings-modal').style.display = 'none'
+}
+
+async function saveSettings() {
+  const name = document.getElementById('settings-name').value.trim()
+  const timezone = document.getElementById('settings-timezone').value
+  const status = document.getElementById('settings-status')
+  const { error } = await db.from('profiles').update({ display_name: name, timezone }).eq('id', currentUser.id)
+  if (error) {
+    status.textContent = 'Failed to save. Please try again.'
+    status.style.color = '#C9474D'
+  } else {
+    status.textContent = '✓ Settings saved'
+    status.style.color = '#2D6A4F'
+    setTimeout(() => closeSettings(), 1200)
+  }
+  status.style.display = 'block'
+}
+
 
 
 
@@ -3226,6 +3693,10 @@ async function scanSubmit() {
   <button class="mobile-nav-item" onclick="showScreen('scan'); setMobileNav(this)">
     <span class="mobile-nav-icon">📱</span>
     <span class="mobile-nav-label">Guest View</span>
+  </button>
+  <button class="mobile-nav-item" onclick="openSettings(); setMobileNav(this)">
+    <span class="mobile-nav-icon">⚙️</span>
+    <span class="mobile-nav-label">Settings</span>
   </button>
 </nav>
   
