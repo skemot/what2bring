@@ -1065,6 +1065,21 @@ tr:hover td { background: var(--cream); }
 
 
 
+<!-- QR MODAL -->
+<div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;" onclick="if(event.target===this)closeQrModal()">
+  <div style="background:white;border-radius:20px;padding:28px;width:90%;max-width:420px;position:relative;text-align:center;">
+    <button onclick="closeQrModal()" style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
+    <div id="qr-modal-title" style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;margin-bottom:4px;padding-right:24px;"></div>
+    <div style="font-size:12px;color:var(--ink-soft);margin-bottom:16px;">Share this QR code with your guests</div>
+    <div id="qr-modal-code" style="display:inline-block;padding:12px;background:white;border:2px solid var(--border);border-radius:12px;margin-bottom:16px;"></div>
+    <div style="font-size:11px;color:var(--ink-soft);word-break:break-all;margin-bottom:16px;padding:8px 12px;background:var(--cream);border-radius:8px;" id="qr-modal-url"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button onclick="copyQrLink(this)" class="btn btn-secondary">🔗 Copy link</button>
+      <button onclick="downloadQrCode()" class="btn btn-primary">⬇ Download QR</button>
+    </div>
+  </div>
+</div>
+
   <!-- UPGRADE MODAL -->
 <div id="upgrade-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
   <div style="background:white;border-radius:20px;padding:32px;width:90%;max-width:400px;position:relative;text-align:center;">
@@ -2322,9 +2337,52 @@ function renderEventDetail(event) {
     `
   }).join('') || '<div style="color:var(--ink-soft);font-size:13px;">No items added</div>'
 
+  // Build guest list grouped by person
+  const guests = {}
+  event.signups?.forEach(s => {
+    const key = s.guest_email ? s.guest_email.toLowerCase() : s.guest_name.toLowerCase()
+    if (!guests[key]) guests[key] = { name: s.guest_name, email: s.guest_email || '', items: [], ids: [] }
+    const item = event.items?.find(i => i.id === s.item_id)
+    if (item) guests[key].items.push(item.name)
+    guests[key].ids.push(s.id)
+  })
+  const guestList = Object.values(guests).sort((a, b) => a.name.localeCompare(b.name))
+  const emails = guestList.filter(g => g.email).map(g => g.email)
+
+  const guestRows = guestList.length
+    ? guestList.map(g => `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:8px 10px;font-size:13px;font-weight:600;">${g.name}</td>
+          <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.email || '<span style="opacity:0.4">—</span>'}</td>
+          <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.items.join(', ')}</td>
+          <td style="padding:8px 6px;text-align:right;">
+            <button onclick="removeGuest('${g.ids[0]}','${event.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--ink-soft);">Remove</button>
+          </td>
+        </tr>`).join('')
+    : `<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--ink-soft);font-size:13px;">No guests yet</td></tr>`
+
   return `
     ${event.instructions ? `<div style="background:var(--warm);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--ink);">📋 <strong>Instructions:</strong> ${event.instructions}</div>` : ''}
     <div>${itemRows}</div>
+    <div style="margin-top:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">👥 Guest List (${guestList.length})</div>
+        ${emails.length ? `<button onclick="navigator.clipboard.writeText('${emails.join(', ')}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='📋 Copy emails',2000)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Copy emails</button>` : ''}
+      </div>
+      <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--warm);">
+              <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Name</th>
+              <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Email</th>
+              <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Bringing</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>${guestRows}</tbody>
+        </table>
+      </div>
+    </div>
   `
 }
 
@@ -2476,13 +2534,76 @@ async function copyShareLink(url, btn) {
 }
 
 function showQrModal(url, eventName) {
-  // We'll add this shortly
-  alert('QR for: ' + url)
+  window._qrModalUrl = url
+  document.getElementById('qr-modal-title').textContent = eventName
+  document.getElementById('qr-modal-url').textContent = url
+  const container = document.getElementById('qr-modal-code')
+  container.innerHTML = ''
+  new QRCode(container, { text: url, width: 280, height: 280, colorDark: '#1A1A2E', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M })
+  document.getElementById('qr-modal').style.display = 'flex'
+}
+
+function closeQrModal() {
+  document.getElementById('qr-modal').style.display = 'none'
+}
+
+function copyQrLink(btn) {
+  navigator.clipboard.writeText(window._qrModalUrl)
+  const orig = btn.textContent
+  btn.textContent = '✓ Copied!'
+  setTimeout(() => btn.textContent = orig, 2000)
+}
+
+function downloadQrCode() {
+  const canvas = document.querySelector('#qr-modal-code canvas')
+  if (!canvas) return
+  const link = document.createElement('a')
+  link.download = 'bringit-qr.png'
+  link.href = canvas.toDataURL()
+  link.click()
 }
 
 function useAsTemplate(event) {
-  // We'll build this when we do past events
-  alert('Coming soon!')
+  showScreen('organiser')
+
+  // Pre-fill details — date/time/location left blank for organiser to fill
+  document.getElementById('event-name-input').value = event.name + ' (Copy)'
+  document.getElementById('event-date-input').value = ''
+  document.getElementById('event-time-input').value = ''
+  document.getElementById('event-location-input').value = ''
+  document.getElementById('organiser-email-input').value = event.organiser_email || ''
+  document.getElementById('item-limit-input').value = event.item_limit || 1
+  const instrEl = document.getElementById('event-instructions-input')
+  if (instrEl) instrEl.value = event.instructions || ''
+
+  // Clear existing items and populate from template (no itemId = treated as new on save)
+  const itemsList = document.getElementById('items-list')
+  itemsList.innerHTML = ''
+  ;(event.items || []).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).forEach(item => {
+    const row = document.createElement('div')
+    row.className = 'item-row'
+    row.dataset.category = item.category || ''
+    row.dataset.servesPrefix = item.serves?.split(' ')[0] || 'Serves'
+    const qtyVal = item.quantity || 1
+    row.innerHTML = `
+      <span class="item-name" onclick="editItemField(this)" title="Click to edit">🍽️ ${item.name}</span>
+      <span class="item-serves" onclick="editItemField(this)" title="Click to edit">${item.serves || ''}</span>
+      <span class="item-qty" onclick="editItemField(this)" title="Click to edit">${qtyVal} available</span>
+      <span class="item-category" onclick="editCategoryField(this)" title="Click to edit" style="font-size:12px;padding:3px 10px;border-radius:20px;background:var(--warm);color:var(--ink-soft);cursor:pointer;">${item.category || 'No category'}</span>
+      <span class="item-status status-open">Open</span>
+      <button onclick="togglePriority(this)" data-priority="${item.is_priority || false}" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 4px;opacity:${item.is_priority ? '1' : '0.3'};" title="Mark as priority">⭐</button>
+      <button class="btn btn-danger" onclick="confirmRemoveItem(this, null)">Remove</button>
+    `
+    itemsList.appendChild(row)
+  })
+
+  // Make sure publish button is in create mode
+  window.editingEventId = null
+  const publishBtn = document.getElementById('publish-btn')
+  publishBtn.textContent = '🚀 Publish Event'
+  publishBtn.onclick = publishEvent
+  document.querySelector('#screen-organiser .page-title').textContent = 'Create an Event'
+  document.querySelector('#screen-organiser .page-subtitle').textContent = 'Fill in the details, add your items, then share the QR code with your guests.'
 }
 
 
