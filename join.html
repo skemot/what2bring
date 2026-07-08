@@ -341,8 +341,9 @@ body {
       <div class="section-label">Your details</div>
       <div class="name-card">
         <input class="guest-input" type="text" id="guest-name" placeholder="Your name (required)" />
-        <input class="guest-input" type="email" id="guest-email" placeholder="Email for reminder (optional)" />
-        <div class="input-hint">📧 Enter your email to get a reminder before the event.</div>
+        <input class="guest-input" type="email" id="guest-email" placeholder="Email address (required)" />
+        <input class="guest-input" type="tel" id="guest-phone" placeholder="Phone number (optional)" />
+        <div class="input-hint">📧 Your email is used to confirm your sign-up. Phone is optional.</div>
       </div>
 
       <div id="event-instructions-banner" style="display:none;background:var(--warm);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:16px;font-size:13px;color:var(--ink);line-height:1.5;">
@@ -521,6 +522,10 @@ function adjustQty(itemId, delta, maxRemaining) {
   if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
   el.textContent = current
 
+  const card = el.closest('.item')
+  if (current > 0) card.classList.add('selected')
+  else card.classList.remove('selected')
+
   // Update selectedItems
   const existing = selectedItems.find(i => i.id === itemId)
   if (current === 0) {
@@ -528,7 +533,7 @@ function adjustQty(itemId, delta, maxRemaining) {
   } else if (existing) {
     existing.quantity = current
   } else {
-    const itemName = el.closest('.item').querySelector('.item-name').textContent
+    const itemName = card.querySelector('.item-name').textContent
     selectedItems.push({ id: itemId, name: itemName, quantity: current })
   }
 }
@@ -734,11 +739,17 @@ function adjustQty(itemId, delta, maxRemaining) {
   async function submitSignup() {
     const name  = document.getElementById('guest-name').value.trim()
     const email = document.getElementById('guest-email').value.trim()
+    const phone = document.getElementById('guest-phone').value.trim()
     const btn   = document.getElementById('submit-btn')
-  
+
     if (!name) {
       document.getElementById('guest-name').style.borderColor = 'var(--rose)'
       document.getElementById('guest-name').focus()
+      return
+    }
+    if (!email || !email.includes('@')) {
+      document.getElementById('guest-email').style.borderColor = 'var(--rose)'
+      document.getElementById('guest-email').focus()
       return
     }
     if (selectedItems.length === 0) {
@@ -750,12 +761,13 @@ function adjustQty(itemId, delta, maxRemaining) {
     btn.textContent = 'Saving...'
   
 // Insert a signup row for each selected item and quantity
-const signupRows = selectedItems.flatMap(item => 
+const signupRows = selectedItems.flatMap(item =>
   Array.from({ length: item.quantity || 1 }, () => ({
     item_id:     item.id,
     event_id:    currentEvent.id,
     guest_name:  name,
-    guest_email: email || null
+    guest_email: email || null,
+    guest_phone: phone || null
   }))
 )
   

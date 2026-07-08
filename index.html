@@ -2187,7 +2187,7 @@ async function loadReportDashboard() {
     .select(`
       *,
       items(id, name, serves, quantity, category, is_priority),
-      signups(id, item_id, guest_name, guest_email)
+      signups(id, item_id, guest_name, guest_email, guest_phone)
     `)
     .eq('organiser_id', currentUser.id)
     .order('event_date', { ascending: true })
@@ -2290,7 +2290,7 @@ function renderActiveEvents(events) {
         <button class="btn btn-secondary btn-sm" onclick="copyShareLink('${joinUrl}', this)">🔗 Copy link</button>
         <button class="btn btn-secondary btn-sm" onclick="showQrModal('${joinUrl}', '${event.name}')">📱 QR Code</button>
         <button class="btn btn-secondary btn-sm" onclick="toggleEditPanel('${event.id}', event)">✏️ Edit</button>
-        <button class="btn btn-secondary btn-sm" onclick="sendRemindersNow('${event.id}', this)">🔔 Send reminders</button>
+        <button class="btn btn-secondary btn-sm" onclick="sendRemindersNow('${event.id}', this)" style="color:var(--green);border-color:var(--green);font-weight:600;">🔔 Send reminder</button>
         <button class="btn btn-secondary btn-sm" style="color:var(--rose);border-color:var(--rose);" onclick="closeEvent('${event.id}', '${event.name.replace(/'/g, "\\'")}')">🔒 Close event</button>
       </div>
       <div id="detail-${event.id}" style="display:none;border-top:1px solid var(--border);padding:16px;">
@@ -2486,7 +2486,7 @@ function renderEventDetail(event) {
   const guests = {}
   event.signups?.forEach(s => {
     const key = s.guest_email ? s.guest_email.toLowerCase() : s.guest_name.toLowerCase()
-    if (!guests[key]) guests[key] = { name: s.guest_name, email: s.guest_email || '', items: [], ids: [] }
+    if (!guests[key]) guests[key] = { name: s.guest_name, email: s.guest_email || '', phone: s.guest_phone || '', items: [], ids: [] }
     const item = event.items?.find(i => i.id === s.item_id)
     if (item) guests[key].items.push(item.name)
     guests[key].ids.push(s.id)
@@ -2494,17 +2494,20 @@ function renderEventDetail(event) {
   const guestList = Object.values(guests).sort((a, b) => a.name.localeCompare(b.name))
   const emails = guestList.filter(g => g.email).map(g => g.email)
 
+  const csvId = `csv-${event.id}`
+
   const guestRows = guestList.length
     ? guestList.map(g => `
         <tr style="border-bottom:1px solid var(--border);">
           <td style="padding:8px 10px;font-size:13px;font-weight:600;">${g.name}</td>
           <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.email || '<span style="opacity:0.4">—</span>'}</td>
+          <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.phone || '<span style="opacity:0.4">—</span>'}</td>
           <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.items.join(', ')}</td>
           <td style="padding:8px 6px;text-align:right;">
             <button onclick="removeGuest('${g.ids[0]}','${event.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--ink-soft);">Remove</button>
           </td>
         </tr>`).join('')
-    : `<tr><td colspan="4" style="padding:12px;text-align:center;color:var(--ink-soft);font-size:13px;">No guests yet</td></tr>`
+    : `<tr><td colspan="5" style="padding:12px;text-align:center;color:var(--ink-soft);font-size:13px;">No guests yet</td></tr>`
 
   return `
     ${event.instructions ? `<div style="background:var(--warm);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--ink);">📋 <strong>Instructions:</strong> ${event.instructions}</div>` : ''}
@@ -2513,6 +2516,7 @@ function renderEventDetail(event) {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);">👥 Guest List (${guestList.length})</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${guestList.length ? `<button onclick="downloadGuestCsv('${event.id}')" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">⬇ Export CSV</button>` : ''}
           ${emails.length ? `<button onclick="navigator.clipboard.writeText('${emails.join(', ')}');this.textContent='✓ Copied!';setTimeout(()=>this.textContent='📋 Copy emails',2000)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;">📋 Copy emails</button>` : ''}
           ${emails.length ? `<button onclick="showMassEmail('${event.id}', ${JSON.stringify(emails)}, '${(event.name||'').replace(/'/g,"\\'")}', '${event.event_date||''}')" style="background:var(--green-pale);color:var(--green);border:none;border-radius:8px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:600;">📧 Email guests</button>` : ''}
         </div>
@@ -2523,6 +2527,7 @@ function renderEventDetail(event) {
             <tr style="background:var(--warm);">
               <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Name</th>
               <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Email</th>
+              <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Phone</th>
               <th style="padding:7px 10px;font-size:11px;font-weight:700;text-align:left;color:var(--ink-soft);">Bringing</th>
               <th></th>
             </tr>
@@ -2531,6 +2536,7 @@ function renderEventDetail(event) {
         </table>
       </div>
     </div>
+    <textarea id="${csvId}" style="display:none;">${['Name,Email,Phone,Items'].concat(guestList.map(g => `"${g.name}","${g.email}","${g.phone}","${g.items.join('; ')}"`)).join('\n')}</textarea>
   `
 }
 
@@ -2707,6 +2713,16 @@ function copyQrLink(btn) {
   setTimeout(() => btn.textContent = orig, 2000)
 }
 
+function downloadGuestCsv(eventId) {
+  const ta = document.getElementById(`csv-${eventId}`)
+  if (!ta) return
+  const blob = new Blob([ta.value], { type: 'text/csv' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(blob)
+  a.download = `guests-${eventId}.csv`
+  a.click()
+}
+
 function downloadQrCode() {
   const canvas = document.querySelector('#qr-modal-code canvas')
   if (!canvas) return
@@ -2794,7 +2810,7 @@ async function removeGuest(signupId, eventId) {
   async function refreshEventCard(eventId) {
   const { data: event } = await db
     .from('events')
-    .select('*, items(id, name, serves, quantity, category), signups(id, item_id, guest_name, guest_email)')
+    .select('*, items(id, name, serves, quantity, category), signups(id, item_id, guest_name, guest_email, guest_phone)')
     .eq('id', eventId)
     .single()
 
