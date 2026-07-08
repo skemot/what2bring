@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BringIt — Group Event Coordinator!!</title>
+<title>What2Bring — Shared Sign-Up Lists for Any Event</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -1025,7 +1025,7 @@ tr:hover td { background: var(--cream); }
 
 <!-- TOP NAV -->
 <nav class="topnav">
-  <div class="logo">🍽️ Bring<em>It</em></div>
+  <div class="logo">🍽️ What2<em>Bring</em></div>
   <div class="nav-pills">
     <button class="nav-pill active" onclick="showScreen('landing')">Home</button>
     <button class="nav-pill" onclick="showScreen('organiser')">📋 Organiser</button>
@@ -1054,7 +1054,7 @@ tr:hover td { background: var(--cream); }
     <button onclick="closeAuth()" style="position:absolute;top:16px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:#888;">✕</button>
     
     <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2D6A4F;">🍽️ BringIt</div>
+      <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:700;color:#2D6A4F;">🍽️ What2Bring</div>
       <div id="auth-title" style="font-size:16px;font-weight:600;margin-top:8px;">Sign in to your account</div>
       <div id="auth-sub" style="font-size:13px;color:#5A5A7A;margin-top:4px;">Create and manage your events</div>
     </div>
@@ -1302,7 +1302,7 @@ tr:hover td { background: var(--cream); }
   <div class="usecases-section">
     <div class="section-eyebrow">Who it's for</div>
     <h2 class="section-title">One tool, every gathering.</h2>
-    <p class="section-sub">BringIt works for any event where multiple people need to bring different things.</p>
+    <p class="section-sub">What2Bring works for any event where multiple people need to bring different things.</p>
 
     <div class="usecases-grid">
       <div class="usecase-card uc-food">
@@ -1390,21 +1390,21 @@ tr:hover td { background: var(--cream); }
       <!-- Pro -->
     </div>
 
-    <p style="text-align:center;font-size:13px;color:var(--ink-soft);margin-top:20px;">No credit card required to start. Cancel any time. Guests always use BringIt for free.</p>
+    <p style="text-align:center;font-size:13px;color:var(--ink-soft);margin-top:20px;">No credit card required to start. Cancel any time. Guests always use What2Bring for free.</p>
   </div>
 
   <!-- Footer -->
   <div style="text-align:center;padding:40px 24px 24px;border-top:1px solid var(--border);margin-top:48px;">
-    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green);margin-bottom:8px;">🍽️ BringIt</div>
+    <div style="font-family:'Fraunces',serif;font-size:18px;font-weight:700;color:var(--green);margin-bottom:8px;">🍽️ What2Bring</div>
     <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Making shared events easy, one item at a time.</div>
     <div style="display:flex;justify-content:center;gap:20px;font-size:13px;">
       <a href="/privacy.html" style="color:var(--ink-soft);text-decoration:none;">Privacy Policy</a>
       <span style="color:var(--border);">·</span>
       <a href="/terms.html" style="color:var(--ink-soft);text-decoration:none;">Terms of Service</a>
       <span style="color:var(--border);">·</span>
-      <a href="mailto:hello@bringit.app" style="color:var(--ink-soft);text-decoration:none;">Contact</a>
+      <a href="mailto:hello@what2bring.app" style="color:var(--ink-soft);text-decoration:none;">Contact</a>
     </div>
-    <div style="font-size:11px;color:var(--border);margin-top:16px;">© 2025 BringIt. All rights reserved.</div>
+    <div style="font-size:11px;color:var(--border);margin-top:16px;">© 2025 What2Bring. All rights reserved.</div>
   </div>
 
 </div>
@@ -1974,7 +1974,7 @@ async function forgotPassword() {
   btn.disabled = true
 
   const { error } = await db.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://bringit.warragulsda.church'
+    redirectTo: 'https://what2bring.app'
   })
   
   if (error) {
@@ -2158,7 +2158,7 @@ if (data?.url) window.location.href = data.url
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search)
   if (params.get('subscribed') === 'true') {
-    alert('🎉 Welcome to BringIt! Your subscription is active.')
+    alert('🎉 Welcome to What2Bring! Your subscription is active.')
     // Clean up URL
     window.history.replaceState({}, '', window.location.pathname)
   }
@@ -2258,7 +2258,7 @@ function renderActiveEvents(events) {
     const pct = totalItems > 0 ? Math.round((takenItems / totalItems) * 100) : 0
     const eventDate = new Date(event.event_date + 'T00:00:00')
     const dateStr = eventDate.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
-    const joinUrl = `https://bringit.warragulsda.church/join.html?event=${event.slug}`
+    const joinUrl = `https://what2bring.app/join.html?event=${event.slug}`
 
     const card = document.createElement('div')
     card.className = 'report-event-card'
@@ -2729,7 +2729,7 @@ function downloadQrCode() {
   const canvas = document.querySelector('#qr-modal-code canvas')
   if (!canvas) return
   const link = document.createElement('a')
-  link.download = 'bringit-qr.png'
+  link.download = 'what2bring-qr.png'
   link.href = canvas.toDataURL()
   link.click()
 }
@@ -3057,7 +3057,7 @@ async function confirmRemoveItem(btn, itemId) {
     const container = document.getElementById('qr-code-container');
     if (!container) return;
     new QRCode(container, {
-      text: 'https://bringit.app/join/spring-potluck-2025',
+      text: 'https://what2bring.app/join/spring-potluck-2025',
       width: 130, height: 130,
       colorDark: '#1A1A2E', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.M
@@ -3076,7 +3076,7 @@ function copyLink() {
     const canvas = document.querySelector('#qr-code-container canvas');
     if (!canvas) return;
     const link = document.createElement('a');
-    link.download = 'bringit-qr.png';
+    link.download = 'what2bring-qr.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
   }
@@ -3324,7 +3324,7 @@ function saveCategoryField(select) {
 
 
   // Update QR code and share link with real URL
-  const liveUrl = `https://bringit.warragulsda.church/join.html?event=${slug}`
+  const liveUrl = `https://what2bring.app/join.html?event=${slug}`
   document.getElementById('share-link').textContent = liveUrl
   
   // Regenerate QR code with real URL

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BringIt — Sign Up</title>
+<title>What2Bring — Sign Up</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -382,7 +382,7 @@ body {
       <div class="success-item" id="success-item"></div>
       <div class="success-detail" id="success-detail"></div>
     </div>
-    <div class="powered-by">Powered by <a href="https://bringit.app">BringIt</a></div>
+    <div class="powered-by">Powered by <a href="https://what2bring.app">What2Bring</a></div>
   </div>
 
 </div>
@@ -544,7 +544,7 @@ function adjustQty(itemId, delta, maxRemaining) {
     CATEGORY_VALUES = eventType.categories
 
     // Update header
-    document.title = event.name + ' — BringIt'
+    document.title = event.name + ' — What2Bring'
     document.getElementById('event-name').textContent = event.name
     document.getElementById('event-host').textContent = event.location || ''
 
@@ -818,7 +818,7 @@ const signupRows = selectedItems.flatMap(item =>
           <h2>New sign-up for ${event.name}</h2>
           <p><strong>${guestName}</strong> has signed up to bring:</p>
           <ul>${itemList}</ul>
-          <p style="color:#888;font-size:12px;">Sent via BringIt</p>
+          <p style="color:#888;font-size:12px;">Sent via What2Bring</p>
         `
       })
     })
@@ -844,7 +844,7 @@ const signupRows = selectedItems.flatMap(item =>
             <ul>${itemList}</ul>
             ${event.event_date ? `<p>📅 <strong>Date:</strong> ${new Date(event.event_date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong></p>` : ''}
             ${event.location ? `<p>📍 <strong>Location:</strong> ${event.location}</p>` : ''}
-            <p style="color:#888;font-size:12px;">Sent via BringIt</p>
+            <p style="color:#888;font-size:12px;">Sent via What2Bring</p>
           `
         })
       })

@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────
-// BringIt config — edit this file to manage
+// What2Bring config — edit this file to manage
 // event types and their category lists.
 //
 // EVENT_TYPES defines what shows in the "What kind

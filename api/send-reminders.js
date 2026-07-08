@@ -104,7 +104,7 @@ export default async function handler(req, res) {
               <ul>${itemList}</ul>
               <p>📅 <strong>Date:</strong> ${eventDate}</p>
               ${event.location ? `<p>📍 <strong>Location:</strong> ${event.location}</p>` : ''}
-              <p style="color:#888;font-size:12px;">Sent via BringIt · <a href="https://bringit.warragulsda.church">bringit.warragulsda.church</a></p>
+              <p style="color:#888;font-size:12px;">Sent via What2Bring · <a href="https://what2bring.app">what2bring.app</a></p>
             `
           })
         })
