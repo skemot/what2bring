@@ -3203,7 +3203,7 @@ function saveItemField(input, type) {
     // Populate category dropdown with default type (potluck)
     populateCategoryDropdown(EVENT_TYPES[0].categories)
 
-    ['item-name-input','item-serves-input'].forEach(id => {
+    ;['item-name-input','item-serves-input'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') addItem(); });
     });
