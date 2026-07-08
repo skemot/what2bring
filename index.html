@@ -1379,9 +1379,10 @@ tr:hover td { background: var(--cream); }
           <li>Unlimited items</li>
           <li>QR code & shareable link</li>
           <li>Full report + export CSV</li>
-          <li>Email reminders (24hr & 48hr)</li>
+          <li>All 12 colour themes</li>
+          <li>Event logo upload</li>
+          <li>Email reminders to guests</li>
           <li>Organiser notifications</li>
-          <li class="no">Custom branding</li>
         </ul>
         <button class="btn-plan primary" onclick="subscribe('starter')">Start 14-day free trial</button>
       </div>
@@ -1483,17 +1484,18 @@ tr:hover td { background: var(--cream); }
     </div>
   </div>
 
-  <!-- Colour Theme -->
+  <!-- Look & Feel -->
   <div class="card">
-    <div class="card-title">🎨 Event Colour</div>
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Customise the look of your guest sign-up page. First 2 are free, all 12 on Pro.</div>
-    <input type="hidden" id="event-theme-color" value="#2D6A4F" />
-    <div id="color-swatches-create" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
-  </div>
+    <div class="card-title">✨ Look &amp; Feel</div>
 
-  <!-- Logo -->
-  <div class="card">
-    <div class="card-title" style="display:flex;align-items:center;gap:8px;">🖼️ Event Logo <span style="font-size:11px;font-weight:500;background:var(--green-pale);color:var(--green);padding:2px 8px;border-radius:20px;">Starter &amp; Pro</span></div>
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Colour theme</div>
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px;">Sets the colour of your guest sign-up page. First 2 colours are free, all 12 on Starter.</div>
+    <input type="hidden" id="event-theme-color" value="#2D6A4F" />
+    <div id="color-swatches-create" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;"></div>
+
+    <div style="height:1px;background:var(--border);margin-bottom:20px;"></div>
+
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--ink-soft);margin-bottom:8px;">Logo <span style="font-size:11px;font-weight:500;background:var(--green-pale);color:var(--green);padding:2px 8px;border-radius:20px;text-transform:none;letter-spacing:0;">Starter</span></div>
     <div style="font-size:13px;color:var(--ink-soft);margin-bottom:14px;">Circular logo shown at the top of the guest sign-up page. JPG, PNG or WebP · max 2MB.</div>
     <input type="hidden" id="event-logo-url" value="" />
     <input type="file" id="logo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleLogoUpload(this)" />
@@ -3525,7 +3527,7 @@ function populateColorSwatches(containerId, selectedHex) {
         data-hex="${c.hex}"
         data-pro="${c.pro}"
         onclick="selectThemeColor('${containerId}','${c.hex}',${c.pro})"
-        title="${c.label}${c.pro ? ' — Pro' : ''}"
+        title="${c.label}${c.pro ? ' — Starter' : ''}"
         style="width:34px;height:34px;border-radius:50%;background:${c.hex};border:3px solid transparent;cursor:pointer;transition:all 0.15s;display:block;box-shadow:${selectedHex===c.hex?`0 0 0 3px ${c.hex},0 0 0 5px white`:''};outline:${selectedHex===c.hex?`3px solid ${c.hex}`:'none'};outline-offset:2px;"
       ></button>
       ${c.pro ? `<span style="position:absolute;bottom:-1px;right:-1px;background:white;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;pointer-events:none;border:1px solid #ddd;line-height:1;">🔒</span>` : ''}
@@ -3536,8 +3538,8 @@ function populateColorSwatches(containerId, selectedHex) {
 async function selectThemeColor(containerId, hex, proOnly = false) {
   if (proOnly) {
     const profile = await getUserPlan()
-    if (!profile || profile.plan !== 'pro') {
-      showUpgradePrompt('Unlock all 12 colour themes with the Pro plan.')
+    if (!profile || profile.plan === 'free') {
+      showUpgradePrompt('Unlock all 12 colour themes with the Starter plan.')
       return
     }
   }
