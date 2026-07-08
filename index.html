@@ -3541,7 +3541,7 @@ function populateColorSwatches(containerId, selectedHex) {
         title="${c.label}${c.pro ? ' — Starter' : ''}"
         style="width:34px;height:34px;border-radius:50%;background:${c.hex};border:3px solid transparent;cursor:pointer;transition:all 0.15s;display:block;box-shadow:${selectedHex===c.hex?`0 0 0 3px ${c.hex},0 0 0 5px white`:''};outline:${selectedHex===c.hex?`3px solid ${c.hex}`:'none'};outline-offset:2px;"
       ></button>
-      ${c.pro ? `<span style="position:absolute;bottom:-1px;right:-1px;background:white;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;pointer-events:none;border:1px solid #ddd;line-height:1;">🔒</span>` : ''}
+      ${c.pro && (!currentPlan || currentPlan === 'free') ? `<span style="position:absolute;bottom:-1px;right:-1px;background:white;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;pointer-events:none;border:1px solid #ddd;line-height:1;">🔒</span>` : ''}
     </div>
   `).join('')
 }
