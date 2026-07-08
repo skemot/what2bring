@@ -1867,6 +1867,7 @@ db.auth.onAuthStateChange(async (event, session) => {
     const profile = await getUserPlan()
     currentPlan = profile?.plan || 'free'
     updatePlanBadge(profile)
+    populateColorSwatches('color-swatches-create', document.getElementById('event-theme-color')?.value || '#2D6A4F')
   } else {
     currentPlan = null
   }
