@@ -3038,6 +3038,10 @@ async function confirmRemoveItem(btn, itemId) {
   
   
   function showScreen(name) {
+    if ((name === 'organiser' || name === 'report') && !currentUser) {
+      openAuth('signin')
+      return
+    }
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
     document.getElementById('screen-' + name).classList.add('active');
