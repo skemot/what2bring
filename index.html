@@ -1857,12 +1857,19 @@ tr:hover td { background: var(--cream); }
 // =============================================
 let authMode = 'signin' // or 'signup'
 let currentUser = null
+let currentPlan = null
 
 // Check auth state on load
-db.auth.onAuthStateChange((event, session) => {
+db.auth.onAuthStateChange(async (event, session) => {
   currentUser = session?.user || null
   updateNavForAuth()
-  if (currentUser) updatePlanBadge()
+  if (currentUser) {
+    const profile = await getUserPlan()
+    currentPlan = profile?.plan || 'free'
+    updatePlanBadge(profile)
+  } else {
+    currentPlan = null
+  }
 })
 
 function updateNavForAuth() {
@@ -2082,8 +2089,8 @@ function closeUpgrade() {
   document.getElementById('upgrade-modal').style.display = 'none'
 }
 
-async function updatePlanBadge() {
-  const profile = await getUserPlan()
+async function updatePlanBadge(profile) {
+  if (!profile) profile = await getUserPlan()
   if (!profile) return
   const badge = document.getElementById('plan-badge')
   if (!badge) return
@@ -3540,12 +3547,9 @@ function populateColorSwatches(containerId, selectedHex) {
 }
 
 async function selectThemeColor(containerId, hex, proOnly = false) {
-  if (proOnly) {
-    const profile = await getUserPlan()
-    if (!profile || profile.plan === 'free') {
-      showUpgradePrompt('Unlock all 12 colour themes with the Starter plan.')
-      return
-    }
+  if (proOnly && (currentPlan === 'free' || !currentPlan)) {
+    showUpgradePrompt('Unlock all 12 colour themes with the Starter plan.')
+    return
   }
   // Update all swatches in this container
   document.querySelectorAll(`#${containerId} .color-swatch-btn`).forEach(btn => {
