@@ -2754,7 +2754,13 @@ function downloadQrCode() {
   link.click()
 }
 
-function useAsTemplate(event) {
+async function useAsTemplate(event) {
+  // Fetch items fresh — dashboard query may not include items for inactive events
+  const { data: items } = await db.from('items')
+    .select('id, name, serves, quantity, category, is_priority, sort_order')
+    .eq('event_id', event.id)
+  event = { ...event, items: items || [] }
+
   showScreen('organiser')
 
   // Pre-fill details — date/time/location left blank for organiser to fill
