@@ -517,9 +517,19 @@ function adjustQty(itemId, delta, maxRemaining) {
   const el = document.getElementById(`qty-select-${itemId}`)
   console.log('el found:', el)
   
+  const limit = itemLimit === 0 ? Infinity : itemLimit
   let current = parseInt(el.textContent) || 0
-  current = Math.max(0, current + delta)
-  if (maxRemaining !== undefined) current = Math.min(current, maxRemaining)
+  const newVal = Math.max(0, current + delta)
+  if (maxRemaining !== undefined && newVal > maxRemaining) return
+
+  // Check total qty across all selected items won't exceed limit
+  const totalOther = selectedItems.filter(i => i.id !== itemId).reduce((s, i) => s + (i.quantity || 1), 0)
+  const capped = Math.min(newVal, limit - totalOther)
+  if (capped <= 0 && delta > 0) {
+    alert(`You can only bring a total of ${itemLimit} item${itemLimit === 1 ? '' : 's'} for this event.`)
+    return
+  }
+  current = Math.max(0, capped)
   el.textContent = current
 
   const card = el.closest('.item')
@@ -533,14 +543,6 @@ function adjustQty(itemId, delta, maxRemaining) {
   } else if (existing) {
     existing.quantity = current
   } else {
-    // Check item limit before adding a new item
-    const limit = itemLimit === 0 ? Infinity : itemLimit
-    if (selectedItems.length >= limit) {
-      el.textContent = 0
-      card.classList.remove('selected')
-      alert(`You can only select up to ${itemLimit} item${itemLimit === 1 ? '' : 's'} for this event.`)
-      return
-    }
     const itemName = card.querySelector('.item-name').textContent
     selectedItems.push({ id: itemId, name: itemName, quantity: current })
   }
