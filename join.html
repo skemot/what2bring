@@ -466,7 +466,7 @@ body {
       }
 
       currentEvent = event
-      itemLimit = currentEvent.item_limit || 3
+      itemLimit = currentEvent.item_limit ?? 1
       applyTheme(event.theme_color)
 
       // Load which items are already taken
