@@ -351,7 +351,7 @@ body {
       </div>
 
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;">
-        <div class="section-label" style="margin:0;">What can you bring? Pick one:</div>
+        <div class="section-label" id="pick-label" style="margin:0;">What can you bring? Pick one:</div>
         <button onclick="document.getElementById('join-help-modal').style.display='flex'" style="background:none;border:1.5px solid var(--border);border-radius:50%;width:22px;height:22px;font-size:12px;font-weight:700;cursor:pointer;color:var(--ink-soft);display:flex;align-items:center;justify-content:center;padding:0;flex-shrink:0;" title="How this works">?</button>
       </div>
       <div class="items-container" id="items-container">
@@ -502,8 +502,6 @@ setInterval(async () => {
       
 
     } catch (e) {
-      console.error('join error:', e?.message, e?.stack)
-      document.title = 'Error: ' + e?.message
       showError()
     }
 
@@ -691,7 +689,7 @@ function adjustQty(itemId, delta, maxRemaining) {
     ? 'What can you bring? Pick one:' 
     : `What can you bring? Pick up to ${currentEvent.item_limit}:`
 
-    document.querySelector('.section-label[style*="margin-top:18px"]').textContent = limitText
+    document.getElementById('pick-label').textContent = limitText
     
     
     // Show the form
