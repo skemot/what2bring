@@ -2427,8 +2427,6 @@ function renderActiveEvents(events) {
   })
 }
 
-const _pastEventCache = {}
-
 function renderPastEvents(events) {
   const container = document.getElementById('past-events-container')
   container.innerHTML = ''
@@ -2439,7 +2437,6 @@ function renderPastEvents(events) {
   }
 
   events.forEach(event => {
-    _pastEventCache[event.id] = event
     const eventDate = new Date(event.event_date + 'T00:00:00')
     const dateStr = eventDate.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
     const card = document.createElement('div')
@@ -2449,8 +2446,9 @@ function renderPastEvents(events) {
         <div style="font-weight:600;font-size:14px;">${event.name}</div>
         <div style="font-size:12px;color:var(--ink-soft);">📅 ${dateStr}</div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="useAsTemplate(_pastEventCache['${event.id}'])">Use as template</button>
+      <button class="btn btn-secondary btn-sm" data-event-id="${event.id}">Use as template</button>
     `
+    card.querySelector('button').addEventListener('click', () => useAsTemplate(event))
     container.appendChild(card)
   })
 }
