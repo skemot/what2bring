@@ -533,6 +533,14 @@ function adjustQty(itemId, delta, maxRemaining) {
   } else if (existing) {
     existing.quantity = current
   } else {
+    // Check item limit before adding a new item
+    const limit = itemLimit === 0 ? Infinity : itemLimit
+    if (selectedItems.length >= limit) {
+      el.textContent = 0
+      card.classList.remove('selected')
+      alert(`You can only select up to ${itemLimit} item${itemLimit === 1 ? '' : 's'} for this event.`)
+      return
+    }
     const itemName = card.querySelector('.item-name').textContent
     selectedItems.push({ id: itemId, name: itemName, quantity: current })
   }
