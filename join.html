@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>What2Bring — Sign Up</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
 <script>
   // CATEGORY_VALUES is derived per-event from the event type — set in renderEvent
@@ -460,7 +460,6 @@ body {
         .eq('is_active', true)
         .single()
 
-      console.log('event query result:', JSON.stringify({ event, error }))
       if (error || !event) {
         showError()
         return
