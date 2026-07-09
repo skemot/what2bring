@@ -2361,15 +2361,19 @@ function renderActiveEvents(events) {
                   : `<span style="background:var(--amber-pale);color:var(--amber);padding:2px 8px;border-radius:20px;font-size:11px;">${remaining} of ${qty} needed</span>`
       
             return `
-              <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);" data-item-id="${item.id}">
-                <div style="flex:1;font-size:14px;font-weight:600;${isTaken ? 'opacity:0.6;' : ''}">${item.name}</div>
-                <div style="font-size:13px;color:var(--ink-soft);${isTaken ? 'opacity:0.6;' : ''}">${item.serves || ''}</div>
+              <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;" data-item-id="${item.id}">
+                <input type="text" value="${item.name.replace(/"/g, '&quot;')}" data-item-id="${item.id}" class="edit-name-input" placeholder="Item name" style="flex:1;min-width:120px;padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;${isTaken ? 'opacity:0.6;' : ''}" />
+                <input type="text" value="${(item.serves || '').replace(/"/g, '&quot;')}" data-item-id="${item.id}" class="edit-serves-input" placeholder="Serves / notes" style="width:110px;padding:6px 9px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--ink-soft);${isTaken ? 'opacity:0.6;' : ''}" />
+                <select data-item-id="${item.id}" class="edit-category-select" style="padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;background:var(--cream);${isTaken ? 'opacity:0.6;' : ''}">
+                  <option value="">No category</option>
+                  ${categoryOptionsHTML(EVENT_TYPES.find(t => t.id === event.event_type)?.categories, item.category || '')}
+                </select>
                 <div style="display:flex;align-items:center;gap:6px;">
                   <label style="font-size:12px;color:var(--ink-soft);">Qty:</label>
-                  <input 
-                    type="number" 
-                    min="${taken}" 
-                    value="${qty}" 
+                  <input
+                    type="number"
+                    min="${taken}"
+                    value="${qty}"
                     data-item-id="${item.id}"
                     data-taken="${taken}"
                     oninput="if(parseInt(this.value) < ${taken}) this.value = ${taken}"
@@ -2512,7 +2516,7 @@ function renderEventDetail(event) {
           <td style="padding:8px 10px;font-size:13px;font-weight:600;">${g.name}</td>
           <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.email || '<span style="opacity:0.4">—</span>'}</td>
           <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.phone || '<span style="opacity:0.4">—</span>'}</td>
-          <td style="padding:8px 10px;font-size:12px;color:var(--ink-soft);">${g.items.join(', ')}</td>
+          <td style="padding:8px 10px;"><div style="display:flex;flex-wrap:wrap;gap:4px;">${g.items.map(i => `<span style="background:var(--green-pale,#e8f5ee);color:var(--green);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;white-space:nowrap;">${i}</span>`).join('')}</div></td>
           <td style="padding:8px 6px;text-align:right;">
             <button onclick="removeGuest('${g.ids[0]}','${event.id}')" style="background:none;border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;color:var(--ink-soft);">Remove</button>
           </td>
@@ -2669,11 +2673,18 @@ async function saveEditChanges(eventId) {
 
     const qtyInputs = editPanel.querySelectorAll('.edit-qty-input')
     for (const input of qtyInputs) {
-      const itemId = input.dataset.itemId
-      const taken  = parseInt(input.dataset.taken) || 0
-      const qty    = Math.max(parseInt(input.value) || 1, taken)
-      const { error } = await db.from('items').update({ quantity: qty }).eq('id', itemId)
-      if (error) { alert('Error saving item quantity: ' + error.message); return }
+      const itemId  = input.dataset.itemId
+      const taken   = parseInt(input.dataset.taken) || 0
+      const qty     = Math.max(parseInt(input.value) || 1, taken)
+      const nameEl  = editPanel.querySelector(`.edit-name-input[data-item-id="${itemId}"]`)
+      const servesEl = editPanel.querySelector(`.edit-serves-input[data-item-id="${itemId}"]`)
+      const catEl   = editPanel.querySelector(`.edit-category-select[data-item-id="${itemId}"]`)
+      const updates = { quantity: qty }
+      if (nameEl?.value.trim()) updates.name = nameEl.value.trim()
+      if (servesEl) updates.serves = servesEl.value.trim() || null
+      if (catEl)    updates.category = catEl.value || null
+      const { error } = await db.from('items').update(updates).eq('id', itemId)
+      if (error) { alert('Error saving item: ' + error.message); return }
     }
 
     // Close panel and reload dashboard
