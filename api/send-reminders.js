@@ -90,16 +90,23 @@ export default async function handler(req, res) {
         const eventDate = new Date(event.event_date + 'T00:00:00')
           .toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
+        const subject = manualEventId
+          ? `Reminder: ${event.name}`
+          : `Reminder: ${event.name} is in 2 days!`
+        const whenLine = manualEventId
+          ? `Don't forget that <strong>${event.name}</strong> is coming up!`
+          : `<strong>${event.name}</strong> is coming up in 2 days!`
+
         const emailRes = await fetch('https://rucolysccqhtifdkronr.supabase.co/functions/v1/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             to: guest.email,
-            subject: `Reminder: ${event.name} is in 2 days!`,
+            subject,
             html: `
               <h2>Just a reminder! 👋</h2>
               <p>Hi ${guest.name},</p>
-              <p>This is a reminder that <strong>${event.name}</strong> is coming up in 2 days!</p>
+              <p>${whenLine}</p>
               <p>You signed up to bring:</p>
               <ul>${itemList}</ul>
               <p>📅 <strong>Date:</strong> ${eventDate}</p>
