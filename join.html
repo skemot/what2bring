@@ -502,6 +502,8 @@ setInterval(async () => {
       
 
     } catch (e) {
+      console.error('join error:', e?.message, e?.stack)
+      document.title = 'Error: ' + e?.message
       showError()
     }
 
