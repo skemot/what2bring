@@ -327,6 +327,8 @@ body {
 }
 .phone-item.selected .phone-check { background: var(--green); border-color: var(--green); color: white; }
 .phone-taken-tag { margin-left: auto; font-size: 8px; background: var(--border); color: var(--ink-soft); padding: 1px 5px; border-radius: 8px; }
+.phone-qty-ctrl { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.phone-qty-btn { width: 14px; height: 14px; border-radius: 50%; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: var(--ink-soft); }
 
 .phone-name-input {
   width: 100%;
@@ -1233,31 +1235,42 @@ tr:hover td { background: var(--cream); }
           <div class="phone-event-header">
             <div class="phone-event-icon">🍽️</div>
             <div class="phone-event-name">Spring Potluck Lunch</div>
-            <div class="phone-event-sub">Hosted by Sarah M.</div>
             <div class="phone-event-date">📅 Sat 22 March · 12:30pm</div>
           </div>
           <div class="phone-body">
-            <div class="phone-label" style="margin-bottom:6px">Your name</div>
-            <input class="phone-name-input" placeholder="Enter your name..." readonly />
-            <div class="phone-label">Pick what to bring</div>
+            <input class="phone-name-input" placeholder="Your name (required)" readonly />
+            <input class="phone-name-input" placeholder="Email address (required)" readonly />
+            <input class="phone-name-input" placeholder="Phone number (optional)" readonly style="margin-bottom:8px;" />
+            <div class="phone-label">What can you bring? Pick one:</div>
             <div class="phone-item taken">
-              <div class="phone-check">✓</div>
-              🥗 Garden Salad
+              🥗 Garden Salad <span style="font-size:8px;color:var(--ink-soft);">Serves 4</span>
               <span class="phone-taken-tag">Taken</span>
             </div>
-            <div class="phone-item selected" onclick="this.classList.toggle('selected')">
-              <div class="phone-check">✓</div>
-              🍞 Bread Rolls
+            <div class="phone-item selected">
+              🍞 Bread Rolls <span style="font-size:8px;color:var(--ink-soft);">×12</span>
+              <span class="phone-qty-ctrl">
+                <span class="phone-qty-btn">−</span>
+                <span style="font-size:9px;font-weight:700;color:var(--green);">1</span>
+                <span class="phone-qty-btn">+</span>
+              </span>
             </div>
-            <div class="phone-item" onclick="this.classList.toggle('selected')">
-              <div class="phone-check"></div>
+            <div class="phone-item">
               🍰 Lemon Cake
+              <span class="phone-qty-ctrl">
+                <span class="phone-qty-btn">−</span>
+                <span style="font-size:9px;">0</span>
+                <span class="phone-qty-btn">+</span>
+              </span>
             </div>
-            <div class="phone-item" onclick="this.classList.toggle('selected')">
-              <div class="phone-check"></div>
+            <div class="phone-item">
               🥤 Soft Drinks
+              <span class="phone-qty-ctrl">
+                <span class="phone-qty-btn">−</span>
+                <span style="font-size:9px;">0</span>
+                <span class="phone-qty-btn">+</span>
+              </span>
             </div>
-            <button class="phone-submit">Confirm my selection ✓</button>
+            <button class="phone-submit">Sign me up ✓</button>
           </div>
         </div>
       </div>
